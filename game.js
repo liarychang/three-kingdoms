@@ -1522,6 +1522,128 @@ function cancelTargetSelection() {
   addLog('已取消目標選擇。', 'system');
 }
 
+
+// ==================== 🌸 四季動態天候粒子引擎 (Weather Particle Engine) ====================
+let weatherCanvas = null;
+let weatherCtx = null;
+let weatherParticles = [];
+let weatherAnimFrame = null;
+
+function initWeatherEngine() {
+  weatherCanvas = document.getElementById('weather-canvas');
+  if (!weatherCanvas) return;
+  weatherCtx = weatherCanvas.getContext('2d');
+
+  function resize() {
+    if (!weatherCanvas) return;
+    weatherCanvas.width = weatherCanvas.clientWidth;
+    weatherCanvas.height = weatherCanvas.clientHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // 初始化 40 個天候粒子
+  weatherParticles = [];
+  for (let i = 0; i < 40; i++) {
+    weatherParticles.push(createParticle());
+  }
+
+  if (weatherAnimFrame) cancelAnimationFrame(weatherAnimFrame);
+  animateWeather();
+}
+
+function createParticle() {
+  const w = weatherCanvas ? weatherCanvas.width : 800;
+  const h = weatherCanvas ? weatherCanvas.height : 600;
+  return {
+    x: Math.random() * w,
+    y: Math.random() * h,
+    size: Math.random() * 4 + 2,
+    speedX: Math.random() * 1.5 - 0.5,
+    speedY: Math.random() * 1.5 + 0.8,
+    rotation: Math.random() * Math.PI * 2,
+    rotSpeed: (Math.random() - 0.5) * 0.05,
+    opacity: Math.random() * 0.6 + 0.3
+  };
+}
+
+function animateWeather() {
+  if (!weatherCanvas || !weatherCtx) return;
+  const w = weatherCanvas.width;
+  const h = weatherCanvas.height;
+  weatherCtx.clearRect(0, 0, w, h);
+
+  const month = gameState.month || 1;
+  const season = getSeason(month);
+
+  weatherParticles.forEach(p => {
+    p.x += p.speedX;
+    p.y += p.speedY;
+    p.rotation += p.rotSpeed;
+
+    if (p.y > h) { p.y = -10; p.x = Math.random() * w; }
+    if (p.x > w) p.x = 0;
+    if (p.x < 0) p.x = w;
+
+    weatherCtx.save();
+    weatherCtx.translate(p.x, p.y);
+    weatherCtx.rotate(p.rotation);
+    weatherCtx.globalAlpha = p.opacity;
+
+    if (month >= 1 && month <= 3) {
+      // 🌸 春生：粉紅櫻花花瓣
+      weatherCtx.fillStyle = '#f48fb1';
+      weatherCtx.beginPath();
+      weatherCtx.ellipse(0, 0, p.size * 1.4, p.size * 0.8, 0, 0, Math.PI * 2);
+      weatherCtx.fill();
+    } else if (month >= 4 && month <= 6) {
+      // ☀️ 夏長：微金暖陽光塵
+      weatherCtx.fillStyle = '#ffe082';
+      weatherCtx.beginPath();
+      weatherCtx.arc(0, 0, p.size * 0.7, 0, Math.PI * 2);
+      weatherCtx.fill();
+    } else if (month >= 7 && month <= 9) {
+      // 🍁 秋收：金紅楓葉落葉
+      weatherCtx.fillStyle = '#ff7043';
+      weatherCtx.beginPath();
+      weatherCtx.ellipse(0, 0, p.size * 1.5, p.size * 0.9, Math.PI / 4, 0, Math.PI * 2);
+      weatherCtx.fill();
+    } else {
+      // ❄️ 冬藏：晶瑩雪花
+      weatherCtx.fillStyle = '#e1f5fe';
+      weatherCtx.beginPath();
+      weatherCtx.arc(0, 0, p.size * 0.9, 0, Math.PI * 2);
+      weatherCtx.fill();
+    }
+
+    weatherCtx.restore();
+  });
+
+  weatherAnimFrame = requestAnimationFrame(animateWeather);
+}
+
+
+// ==================== 📜 天下大事日誌分類過濾 ====================
+let currentLogFilter = 'all';
+window.filterChronicleLogs = function(type) {
+  currentLogFilter = type;
+  document.querySelectorAll('.log-filter-btn').forEach(btn => {
+    if (btn.dataset.filter === type) btn.classList.add('active');
+    else btn.classList.remove('active');
+  });
+
+  const logEntries = document.querySelectorAll('#event-logs .log-item');
+  logEntries.forEach(entry => {
+    if (type === 'all') {
+      entry.style.display = 'block';
+    } else if (entry.classList.contains(type)) {
+      entry.style.display = 'block';
+    } else {
+      entry.style.display = 'none';
+    }
+  });
+};
+
 function initGameApp() {
   gameState.cities = JSON.parse(JSON.stringify(CITIES));
   gameState.generals = JSON.parse(JSON.stringify(GENERALS)).map(g => {
@@ -1534,6 +1656,7 @@ function initGameApp() {
   bindEvents();
   initMultiplayer();
   initKeyboardShortcuts();
+  initWeatherEngine();
   
   // 開始播放地圖音樂
   document.body.addEventListener('click', () => {
@@ -1990,11 +2113,21 @@ function updateGlobalStats() {
   ) || gameState.generals.find(g => g.faction === gameState.playerFactionId);
   const leaderPortrait = leaderGen ? (leaderGen.portrait || 'portraits/default.jpg') : 'portraits/default.jpg';
   
+  const lStats = leaderGen ? (leaderGen.stats || { lea: 85, war: 80, int: 80, pol: 80, cha: 85 }) : { lea: 85, war: 80, int: 80, pol: 80, cha: 85 };
   elFactionStatusArea.innerHTML = `
-    <div class="faction-badge" style="background-image: url('${leaderPortrait}'); border-color: ${pFaction.color}; box-shadow: 0 0 10px ${pFaction.color};"></div>
-    <div class="stat-item" style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1;">
-      <span class="stat-label" style="font-size: 0.65rem; color: #aaa;">君主</span>
-      <span class="stat-value" style="color: ${pFaction.color}; white-space: nowrap; font-size: 0.95rem; font-weight: bold;">${pFaction.leader}</span>
+    <div class="lord-portrait-frame" style="background-image: url('${leaderPortrait}'); border-color: ${pFaction.color}; box-shadow: 0 0 12px ${pFaction.color};"></div>
+    <div style="display: flex; flex-direction: column; flex: 1;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <span style="color: ${pFaction.color}; font-size: 1.05rem; font-weight: bold;">${pFaction.leader}</span>
+        <span style="font-size: 0.72rem; color: #ffd700; background: rgba(255,215,0,0.15); padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(255,215,0,0.3);">${pFaction.name}</span>
+      </div>
+      <div class="lord-stats-bars-grid">
+        <div class="lord-stat-mini-pill"><span class="lord-stat-mini-label">統</span><span class="lord-stat-mini-val stat-val-lea">${lStats.lea || lStats.lead || 80}</span></div>
+        <div class="lord-stat-mini-pill"><span class="lord-stat-mini-label">武</span><span class="lord-stat-mini-val stat-val-war">${lStats.war || lStats.str || 80}</span></div>
+        <div class="lord-stat-mini-pill"><span class="lord-stat-mini-label">智</span><span class="lord-stat-mini-val stat-val-int">${lStats.int || 80}</span></div>
+        <div class="lord-stat-mini-pill"><span class="lord-stat-mini-label">政</span><span class="lord-stat-mini-val stat-val-pol">${lStats.pol || 80}</span></div>
+        <div class="lord-stat-mini-pill"><span class="lord-stat-mini-label">魅</span><span class="lord-stat-mini-val stat-val-cha">${lStats.cha || 85}</span></div>
+      </div>
     </div>
   `;
   
@@ -2295,7 +2428,14 @@ function deselectCity() {
 function updateRightPanel(city) {
   const faction = FACTIONS[city.faction] || FACTIONS['neutral'] || { name: '中立', color: '#757575', banner: '空', leader: '無' };
   
-  elDetailCityName.textContent = city.name;
+  let specialtyText = '🌾 天府沃土';
+  if (['luoyang', 'changan', 'ye', 'jianye', 'chengdu'].includes(city.id)) specialtyText = '👑 帝都樞紐';
+  else if (['tianshui', 'hanzhong', 'dunhuang', 'beiping', 'liaodong', 'jinyang'].includes(city.id)) specialtyText = '🛡️ 天險要塞';
+  else if (['xiongnu', 'wuhuan', 'xiqiang', 'dayuan'].includes(city.id)) specialtyText = '🐎 名馬產地';
+  else if (['shouchun', 'chaisang', 'huiji', 'jiaozhi'].includes(city.id)) specialtyText = '💰 繁華商埠';
+  else if (['banadong', 'yunnan'].includes(city.id)) specialtyText = '🐘 巨象藤甲';
+
+  elDetailCityName.innerHTML = `${city.name} <span class="city-specialty-badge">${specialtyText}</span>`;
   elDetailCityFaction.textContent = faction.name;
   elDetailCityFaction.style.backgroundColor = faction.color;
   

@@ -91,8 +91,8 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 0 16px;
-  height: 56px;
-  min-height: 56px;
+  height: 64px;
+  min-height: 64px;
   z-index: 100;
   border-bottom: 2px solid var(--color-panel-border);
   background: linear-gradient(to bottom, rgba(28, 22, 16, 0.98), rgba(16, 12, 8, 0.98));
@@ -4458,6 +4458,7 @@ body {
 }
 
 /* 🎯 出征/行軍目標選取指引橫幅 */
+.target-hint-banner.hidden { display: none !important; }
 .target-hint-banner {
   position: absolute;
   top: 50px;
@@ -4809,4 +4810,203 @@ body {
   transform: translateY(-2px) scale(1.04);
   box-shadow: 0 6px 18px rgba(255, 215, 0, 0.7);
   background: linear-gradient(135deg, #fff, #ffd700);
+}
+
+
+/* ==================== 🌸 四季動態天候粒子層 ==================== */
+.weather-canvas-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+  overflow: hidden;
+}
+
+/* ==================== 🗺️ 地圖流光征戰與補給路線 ==================== */
+.map-route-line {
+  stroke-dasharray: 6 10;
+  animation: route-march 25s linear infinite;
+}
+
+@keyframes route-march {
+  from { stroke-dashoffset: 200; }
+  to { stroke-dashoffset: 0; }
+}
+
+.river-path {
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 4px rgba(77, 208, 225, 0.6));
+  animation: river-pulse 4s ease-in-out infinite alternate;
+}
+
+@keyframes river-pulse {
+  0% { stroke-opacity: 0.7; }
+  100% { stroke-opacity: 1; }
+}
+
+/* 首都/主城金色雷達光環 */
+.capital-pulse-ring {
+  transform-origin: center;
+  animation: capital-pulse 2.2s infinite ease-out;
+}
+
+@keyframes capital-pulse {
+  0% { r: 18; opacity: 0.9; stroke-width: 2.5; }
+  50% { opacity: 0.5; }
+  100% { r: 36; opacity: 0; stroke-width: 0.5; }
+}
+
+/* ==================== 👑 左側君主金印卡精緻化 ==================== */
+.lord-portrait-frame {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  border: 2px solid #ffd700;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.4), inset 0 0 8px rgba(0,0,0,0.6);
+  background-size: cover;
+  background-position: center top;
+  flex-shrink: 0;
+}
+
+.lord-portrait-frame::after {
+  content: '👑';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  font-size: 1rem;
+  filter: drop-shadow(0 0 4px #ffd700);
+}
+
+.lord-stats-bars-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  margin-top: 8px;
+  padding: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 215, 0, 0.15);
+}
+
+.lord-stat-mini-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.7rem;
+}
+
+.lord-stat-mini-label {
+  font-size: 0.65rem;
+  color: #aaa;
+  margin-bottom: 2px;
+}
+
+.lord-stat-mini-val {
+  font-weight: 900;
+  font-size: 0.82rem;
+}
+
+.stat-val-lea { color: #42a5f5; }
+.stat-val-war { color: #ef5350; }
+.stat-val-int { color: #ab47bc; }
+.stat-val-pol { color: #66bb6a; }
+.stat-val-cha { color: #ffa726; }
+
+/* ==================== 📜 天下大事日誌分類過濾按鈕 ==================== */
+.log-filter-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+  padding-bottom: 6px;
+}
+
+.log-filter-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  color: #ccc;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.log-filter-btn:hover, .log-filter-btn.active {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(183, 28, 28, 0.4));
+  border-color: #ffd700;
+  color: #ffd700;
+  font-weight: bold;
+}
+
+/* ==================== 🏰 城池特產標籤 ==================== */
+.city-specialty-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 215, 0, 0.15);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  color: #ffd54f;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+
+.faction-status-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(255, 215, 0, 0.3);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+
+.lord-portrait-frame {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  border: 2px solid #ffd700;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+  background-size: cover;
+  background-position: center top;
+  flex-shrink: 0;
+}
+
+.lord-stats-bars-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  margin-top: 2px;
+  padding: 2px 6px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 215, 0, 0.15);
+}
+
+.lord-stat-mini-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.65rem;
+  line-height: 1;
+}
+
+.lord-stat-mini-label {
+  font-size: 0.58rem;
+  color: #bbb;
+  margin-bottom: 1px;
+}
+
+.lord-stat-mini-val {
+  font-weight: 900;
+  font-size: 0.75rem;
 }

@@ -84,6 +84,12 @@
           <span>天下大事日誌</span>
           <span style="font-size: 0.8rem; font-weight: normal; color: var(--color-text-dim);">最新 50 筆</span>
         </div>
+        <div class="log-filter-bar" id="log-filter-bar">
+          <button class="log-filter-btn active" data-filter="all" onclick="filterChronicleLogs('all')">全部</button>
+          <button class="log-filter-btn" data-filter="battle" onclick="filterChronicleLogs('battle')">⚔️ 戰報</button>
+          <button class="log-filter-btn" data-filter="system" onclick="filterChronicleLogs('system')">📜 政務</button>
+          <button class="log-filter-btn" data-filter="highlight" onclick="filterChronicleLogs('highlight')">⚡ 史詩</button>
+        </div>
         <div class="log-messages" id="event-logs">
           <!-- JS 動態插入事件日誌 -->
         </div>
@@ -91,7 +97,9 @@
     </section>
 
     <!-- 中間面板：地圖 SVG -->
-        <section class="map-panel glass-panel">
+    <section class="map-panel glass-panel" id="center-map-viewport" style="position: relative;">
+      <!-- 🌸 四季動態天候氛圍畫布 -->
+      <canvas class="weather-canvas-container" id="weather-canvas"></canvas>
       <!-- 👑 己方領地快速導航列 -->
       <div class="my-cities-nav-bar" id="my-cities-nav-bar">
         <div class="nav-bar-title">👑 我方領地:</div>
@@ -1426,6 +1434,6 @@
 
   <!-- 遊戲核心 JS 腳本 -->
   <!-- 注意：我們使用 script type="module" 來使用 ES6 import -->
-  <script type="module" src="game.js?v=202608152040"></script>
+  <script type="module" src="game.js?v=202608152050"></script>
 </body>
 </html>
