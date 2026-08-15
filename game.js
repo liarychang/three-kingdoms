@@ -1,3 +1,4 @@
+import { MultiplayerManager } from './multiplayer.js';
 // 三國志地圖策略遊戲 - 核心遊戲引擎 (game.js) - 真人頭像與寫實畫面版
 
 import { FACTIONS, CITIES, CONNECTIONS } from './map-data.js';
@@ -1262,6 +1263,64 @@ function triggerCinematic(type, title, subtitle, general, bgImage, callback) {
   setTimeout(closeFn, 3500);
 }
 
+
+// ==================== 多人連線與同機多人管理器 ====================
+let multiplayerMgr = null;
+let hotseatState = {
+  active: false,
+  players: [], // ['cao_cao', 'liu_bei', ...]
+  currentIndex: 0
+};
+
+function initMultiplayer() {
+  const gameAppInterface = {
+    gameState,
+    addLog,
+    renderMap,
+    updateGlobalStats,
+    startGame,
+    processEndTurn: () => {
+      // 伺服器同步推進回合
+      gameState.month++;
+      if (gameState.month > 12) {
+        gameState.year++;
+        gameState.month = 1;
+        checkHistoricalEvents();
+      }
+      addLog(`✨【天下歲月】西元 ${gameState.year} 年 ${gameState.month} 月，天下大勢翻覆！`, 'system');
+      updateGlobalStats();
+      renderMap();
+    },
+    startHotseatLobby: () => {
+      startHotseatMode();
+    }
+  };
+
+  multiplayerMgr = new MultiplayerManager(gameAppInterface);
+
+  const mpBtn = document.getElementById('multiplayer-btn');
+  if (mpBtn) {
+    mpBtn.addEventListener('click', () => {
+      playSound('select');
+      const elOverlay = document.getElementById('multiplayer-overlay');
+      if (elOverlay) elOverlay.classList.remove('hidden');
+    });
+  }
+}
+
+function startHotseatMode() {
+  const scenario = SCENARIOS[0];
+  hotseatState.active = true;
+  hotseatState.players = scenario.activeFactions.slice(0, 3); // 默認前3個勢力
+  hotseatState.currentIndex = 0;
+  
+  gameState.playerFactionId = hotseatState.players[0];
+  document.getElementById('start-overlay')?.classList.add('hidden');
+  
+  addLog(`🎮【同機多人】已開啟同機輪流操盤模式！參戰君主共計 ${hotseatState.players.length} 位！`, 'highlight');
+  startGame();
+}
+
 function initGameApp() {
   gameState.cities = JSON.parse(JSON.stringify(CITIES));
   gameState.generals = JSON.parse(JSON.stringify(GENERALS)).map(g => {
@@ -1272,6 +1331,7 @@ function initGameApp() {
   
   initStartMenu();
   bindEvents();
+  initMultiplayer();
   
   // 開始播放地圖音樂
   document.body.addEventListener('click', () => {
@@ -1296,6 +1356,27 @@ function bindEvents() {
 
   elEndTurnBtn.addEventListener('click', () => {
     playSound('command_ok');
+    if (multiplayerMgr && multiplayerMgr.notifyEndTurnReady()) {
+      addLog('⏳ 已發送回合就緒信號，等待同局其他君主結束本月...', 'system');
+      return;
+    }
+    if (hotseatState.active) {
+      // 切換至下一位同機玩家
+      hotseatState.currentIndex = (hotseatState.currentIndex + 1) % hotseatState.players.length;
+      gameState.playerFactionId = hotseatState.players[hotseatState.currentIndex];
+      const nextFaction = FACTIONS[gameState.playerFactionId];
+      alert(`🔔 請【${nextFaction.name}（${nextFaction.leader}）】接替操盤！`);
+      addLog(`🔔 輪到【${nextFaction.name}（${nextFaction.leader}）】勢力操盤！`, 'highlight');
+      if (hotseatState.currentIndex === 0) {
+        processEndTurn();
+      } else {
+        updateGlobalStats();
+        renderMap();
+        const myCap = gameState.cities.find(c => c.faction === gameState.playerFactionId);
+        if (myCap) selectCity(myCap);
+      }
+      return;
+    }
     processEndTurn();
   });
 

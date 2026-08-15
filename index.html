@@ -51,6 +51,8 @@
     </div>
 
     <div style="display: flex; gap: 6px;">
+            <button class="audio-toggle" id="multiplayer-btn" title="多人連線對戰大廳" style="border-color: #ffd700; color: #ffd700; background: rgba(255, 215, 0, 0.15); font-weight: bold;">🌐 多人連線</button>
+      <span class="season-badge" id="mp-online-badge" style="display:none; background: rgba(76, 175, 80, 0.2); border: 1px solid #4caf50; color: #81c784; font-size: 0.75rem; padding: 2px 8px; border-radius: 12px;"></span>
       <button class="audio-toggle" id="family-btn" title="家族子嗣府">👶</button>
       <button class="audio-toggle" id="ranks-btn" title="朝廷官職與冊封">📜</button>
       <button class="audio-toggle" id="achievements-btn" title="天下成就圖鑑">🏆</button>
@@ -1256,6 +1258,123 @@
     <div class="cinematic-skip-hint">點擊任意處繼續 ▶</div>
   </div>
 
+    <!-- ==================== 多人連線對決大廳 Overlay ==================== -->
+  <div class="modal-overlay hidden" id="multiplayer-overlay" style="z-index: 9900;">
+    <div class="multiplayer-modal glass-panel gold-border" id="multiplayer-box">
+      <div class="tech-header">
+        <div class="tech-title-group">
+          <span class="tech-header-icon">🌐</span>
+          <div>
+            <h2 class="tech-header-title">多人連線・群雄並起戰局</h2>
+            <div class="tech-header-sub">支援 2～8 人線上 WebSocket 房間對戰、即時回合同步與同機多人操盤</div>
+          </div>
+        </div>
+        <div class="tech-header-right">
+          <button class="tech-close-btn" id="mp-close-btn">✖</button>
+        </div>
+      </div>
+
+      <!-- 視圖 1：大廳首頁 (創建 / 加入 / 同機) -->
+      <div id="mp-lobby-view" class="mp-view-section">
+        <div class="mp-lobby-grid">
+          <!-- 創建房間卡 -->
+          <div class="mp-card glass-panel">
+            <h3 style="color:#ffd700; font-size:1.2rem; margin-bottom:10px;">🏠 建立線上戰局</h3>
+            <p style="font-size:0.85rem; color:#ccc; margin-bottom:12px;">化身房主，創建專屬戰局房間號，邀請好友連線爭奪中原！</p>
+            <div class="form-group" style="margin-bottom:10px;">
+              <label style="font-size:0.8rem; color:#ffd54f;">您的主公暱稱</label>
+              <input type="text" id="mp-nickname-input" value="主公" maxlength="8" class="custom-input">
+            </div>
+            <button class="btn-primary" id="mp-create-room-btn" style="width:100%; padding:10px; font-size:1rem; font-weight:bold;">
+              👑 建立戰局房間
+            </button>
+          </div>
+
+          <!-- 加入房間卡 -->
+          <div class="mp-card glass-panel">
+            <h3 style="color:#81c784; font-size:1.2rem; margin-bottom:10px;">🚪 加入現有戰局</h3>
+            <p style="font-size:0.85rem; color:#ccc; margin-bottom:12px;">輸入好友分享的 4 位房間代碼，即刻加入連線戰局！</p>
+            <div class="form-group" style="margin-bottom:10px;">
+              <label style="font-size:0.8rem; color:#81c784;">房間代碼 (例如: TK-8888)</label>
+              <input type="text" id="mp-room-code-input" placeholder="TK-XXXX" maxlength="8" class="custom-input" style="text-transform:uppercase; text-align:center; font-weight:bold; letter-spacing:2px;">
+            </div>
+            <button class="btn-primary" id="mp-join-room-btn" style="width:100%; padding:10px; font-size:1rem; font-weight:bold; background:linear-gradient(135deg, #2e7d32, #1b5e20);">
+              ⚔️ 加入戰局房間
+            </button>
+          </div>
+
+          <!-- 同機多人操盤卡 -->
+          <div class="mp-card glass-panel">
+            <h3 style="color:#64b5f6; font-size:1.2rem; margin-bottom:10px;">👥 同機多人操盤 (Hot-seat)</h3>
+            <p style="font-size:0.85rem; color:#ccc; margin-bottom:12px;">無需聯網！在同一台電腦前，與 2～8 位好友輪流操盤不同勢力！</p>
+            <button class="btn-primary" id="mp-hotseat-btn" style="width:100%; padding:10px; font-size:1rem; font-weight:bold; background:linear-gradient(135deg, #1565c0, #0d47a1); margin-top:28px;">
+              🎮 開啟同機多人模式
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 視圖 2：房間等候室 (認領陣營 / 就緒 / 房主開戰) -->
+      <div id="mp-room-view" class="mp-view-section hidden">
+        <div class="mp-room-header-row">
+          <div>
+            <span style="color:#aaa; font-size:0.9rem;">房間代碼：</span>
+            <span id="mp-room-code-display" style="color:#ffd700; font-size:1.6rem; font-weight:900; letter-spacing:3px; background:rgba(0,0,0,0.6); padding:4px 14px; border-radius:6px; border:1px solid #ffd700;">TK-XXXX</span>
+            <span style="font-size:0.8rem; color:#81c784; margin-left:10px;">(複製代碼發給好友即可加入)</span>
+          </div>
+          <div>
+            <button id="mp-leave-btn" style="background:#c62828; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">離開房間</button>
+          </div>
+        </div>
+
+        <div class="mp-room-grid">
+          <!-- 左側：在線玩家名單 -->
+          <div class="mp-room-players-panel">
+            <h4 style="color:#ffd54f; font-size:1rem; margin-bottom:8px;">在線主公名單：</h4>
+            <div id="mp-players-list" class="mp-players-grid">
+              <!-- JS 動態插入玩家卡 -->
+            </div>
+          </div>
+
+          <!-- 右側：君主勢力認領與就緒 -->
+          <div class="mp-room-factions-panel">
+            <h4 style="color:#81c784; font-size:1rem; margin-bottom:8px;">點選認領您欲扮演之君主勢力：</h4>
+            <div id="mp-factions-list" class="mp-factions-grid">
+              <!-- JS 動態插入勢力按鈕 -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部控制按鈕 -->
+        <div class="mp-room-footer">
+          <button id="mp-ready-btn" class="btn-primary" style="padding:10px 24px; font-size:1.1rem; font-weight:bold;">
+            準備就緒！
+          </button>
+          <button id="mp-start-btn" class="btn-primary" style="padding:10px 32px; font-size:1.1rem; font-weight:bold; background:linear-gradient(135deg, #d32f2f, #b71c1c); display:none;" disabled>
+            🔥 房主開始逐鹿！
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 即時多人聊天室懸浮按鈕與抽屜 -->
+  <button id="mp-chat-toggle-btn" class="mp-floating-chat-btn" style="display:none;" title="開啟天下密信與公頻聊天">💬 密信/公頻</button>
+  
+  <div id="mp-chat-drawer" class="mp-chat-drawer glass-panel gold-border" style="display:none;">
+    <div class="mp-chat-header">
+      <span>💬 天下群雄即時密信・公頻</span>
+      <button id="mp-chat-close-btn" style="background:none; border:none; color:#fff; cursor:pointer; font-size:1rem;" onclick="document.getElementById('mp-chat-drawer').style.display='none'">✖</button>
+    </div>
+    <div class="mp-chat-logs" id="mp-chat-logs">
+      <div style="font-size:0.8rem; color:#81c784;">【系統】歡迎來到三國志多人公頻！發送訊息即可與全房間君主即時交談。</div>
+    </div>
+    <div class="mp-chat-input-row">
+      <input type="text" id="mp-chat-input" placeholder="輸入外交密信或發言..." maxlength="60" class="custom-input" style="flex:1; padding:6px 10px; font-size:0.85rem;">
+      <button id="mp-chat-send-btn" class="btn-primary" style="padding:6px 14px; font-size:0.85rem;">傳送</button>
+    </div>
+  </div>
+
   <!-- ==================== 史詩劇本開場影片與時代序章 Overlay ==================== -->
   <div class="modal-overlay hidden" id="scenario-intro-overlay" style="z-index: 9800;">
     <div class="scenario-intro-modal" id="scenario-intro-box">
@@ -1293,6 +1412,6 @@
 
   <!-- 遊戲核心 JS 腳本 -->
   <!-- 注意：我們使用 script type="module" 來使用 ES6 import -->
-  <script type="module" src="game.js?v=2026081513"></script>
+  <script type="module" src="game.js?v=2026081514"></script>
 </body>
 </html>

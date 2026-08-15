@@ -1,0 +1,7 @@
+{
+  "name": "three-kingdoms-map-game",
+  "version": "2.0.0",
+  "type": "module",
+  "description": "Three Kingdoms Grand Strategy Map Game with Multiplayer",
+  "main": "server.js"
+}
