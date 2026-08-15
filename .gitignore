@@ -1,0 +1,7 @@
+# Temporary build & test scripts
+test_*.js
+automated_*.js
+*.py
+node_modules/
+.DS_Store
+Thumbs.db

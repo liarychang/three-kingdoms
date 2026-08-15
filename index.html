@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>三國志：天下三分</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Noto+Serif+TC:wght@500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- 頂部狀態列 -->
+  <header class="top-bar">
+    <div class="game-title">
+      三國志：逐鹿中原 <span>復刻版</span>
+    </div>
+    
+    <div class="stats-container">
+      <div class="faction-status" id="faction-status-area">
+        <!-- JS 動態插入勢力徽章與領導者 -->
+      </div>
+      
+      <div style="border-left: 1px solid rgba(255,255,255,0.1); margin: 0 10px;"></div>
+      
+      <div class="stat-item">
+        <span class="stat-label">時間</span>
+        <span class="stat-value" id="game-date">190年 1月</span>
+      </div>
+      <div class="stat-item season-item" id="season-display" title="當前時節天候與經營加成">
+        <span class="stat-label">時令天候</span>
+        <span class="season-badge" id="season-badge">🌸 春生・農耕</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">勢力黃金</span>
+        <span class="stat-value" id="faction-gold">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">勢力糧草</span>
+        <span class="stat-value" id="faction-food">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">總兵力</span>
+        <span class="stat-value" id="faction-troops">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">武將數</span>
+        <span class="stat-value" id="faction-generals">0</span>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 6px;">
+      <button class="audio-toggle" id="family-btn" title="家族子嗣府">👶</button>
+      <button class="audio-toggle" id="ranks-btn" title="朝廷官職與冊封">📜</button>
+      <button class="audio-toggle" id="achievements-btn" title="天下成就圖鑑">🏆</button>
+      <button class="audio-toggle" id="tech-btn" title="勢力科技研發">🔬</button>
+      <button class="audio-toggle" id="save-btn" title="儲存遊戲進度">💾</button>
+      <button class="audio-toggle" id="load-btn" title="讀取遊戲進度">📂</button>
+      <button class="audio-toggle" id="audio-toggle-btn" title="背景音樂開關">🎵</button>
+    </div>
+  </header>
+
+  <!-- 遊戲主畫面 -->
+  <main class="main-content">
+    
+    <!-- 左側面板：勢力簡介與情報日誌 -->
+    <section class="left-panel">
+      <div class="faction-info-card glass-panel">
+        <div class="leader-display">
+          <div class="leader-portrait" id="player-leader-portrait">-</div>
+          <div class="leader-details">
+            <div class="leader-name" id="player-leader-name">-</div>
+            <div class="faction-name" id="player-faction-name">-</div>
+          </div>
+        </div>
+        <div class="faction-summary" id="player-faction-desc">
+          載入中...
+        </div>
+      </div>
+      
+      <div class="log-container glass-panel">
+        <div class="log-title">
+          <span>天下大事日誌</span>
+          <span style="font-size: 0.8rem; font-weight: normal; color: var(--color-text-dim);">最新 50 筆</span>
+        </div>
+        <div class="log-messages" id="event-logs">
+          <!-- JS 動態插入事件日誌 -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 中間面板：地圖 SVG -->
+    <section class="map-panel glass-panel">
+      <svg class="map-svg" viewBox="0 0 1000 700" id="game-map">
+        <!-- 背景與紋理 (由JS動態生成，或靜態SVG元素) -->
+        <defs>
+          <radialGradient id="map-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="rgba(0, 0, 0, 0)" />
+            <stop offset="100%" stop-color="rgba(0, 0, 0, 0.7)" />
+          </radialGradient>
+          <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.6"/>
+          </filter>
+                  <radialGradient id="taiwan-gradient" cx="50%" cy="50%" r="60%">
+            <stop offset="0%" stop-color="#4caf50" />
+            <stop offset="70%" stop-color="#2e7d32" />
+            <stop offset="100%" stop-color="#1b5e20" />
+          </radialGradient>
+        </defs>
+        <!-- 背景地圖圖層 -->
+                <!-- 地圖背景圖層與歷史山水地形 -->
+        <!-- 地圖背景圖層與歷史山水、東瀛列島、大漠、西域、雪域全域地形 -->
+        <g id="map-terrain-layer">
+          <!-- 大陸底色與大地漸層 -->
+          <rect width="1000" height="700" fill="#151c19" />
+          <rect width="1000" height="700" fill="url(#map-glow)" style="pointer-events: none;"></rect>
+
+          <!-- ================= 廣大海洋水域 (東海、南海、台灣海峽、日本海、黃海) ================= -->
+          <path d="M 750 700 L 750 510 Q 820 470 870 410 Q 910 330 960 270 L 1000 270 L 1000 700 Z" fill="rgba(10, 36, 64, 0.55)" />
+          <path d="M 310 700 L 310 650 Q 550 660 750 700 Z" fill="rgba(10, 36, 64, 0.4)" />
+          <path d="M 910 180 Q 940 240 980 270 L 1000 270 L 1000 70 L 930 70 Z" fill="rgba(10, 36, 64, 0.45)" />
+
+          <!-- 海域名稱標註 -->
+          <text x="930" y="270" fill="rgba(100, 181, 246, 0.4)" font-size="12" font-family="'Noto Serif TC', serif" letter-spacing="3">日 本 海</text>
+          <text x="915" y="480" fill="rgba(100, 181, 246, 0.45)" font-size="13" font-family="'Noto Serif TC', serif" letter-spacing="4">東 海</text>
+          <text x="825" y="650" fill="rgba(100, 181, 246, 0.4)" font-size="12" font-family="'Noto Serif TC', serif" letter-spacing="3">台灣海峽</text>
+          <text x="500" y="685" fill="rgba(100, 181, 246, 0.35)" font-size="13" font-family="'Noto Serif TC', serif" letter-spacing="4">南 海</text>
+          <text x="830" y="280" fill="rgba(100, 181, 246, 0.35)" font-size="12" font-family="'Noto Serif TC', serif" letter-spacing="3">黃 海</text>
+
+          <!-- ================= 漠北戈壁大漠 (匈奴) ================= -->
+          <g id="gobi-desert-terrain">
+            <path d="M 350 20 Q 460 75 580 30 Q 640 60 720 20 L 720 0 L 350 0 Z" fill="rgba(215, 204, 200, 0.12)" />
+            <path d="M 380 40 Q 460 80 540 45" fill="none" stroke="rgba(255, 224, 130, 0.25)" stroke-width="2" stroke-dasharray="8,4" />
+            <rect x="400" y="15" width="120" height="20" rx="10" fill="rgba(0,0,0,0.7)" stroke="#8d6e63" stroke-width="1" />
+            <text x="460" y="29" fill="#d7ccc8" font-size="11" font-family="'Noto Serif TC', serif" font-weight="bold" text-anchor="middle">🐎 匈奴單于庭 (大漠)</text>
+          </g>
+
+          <!-- ================= 烏桓白狼山 ================= -->
+          <g id="wuhuan-terrain">
+            <polygon points="710,60 735,25 760,60" fill="rgba(141, 110, 99, 0.3)" stroke="#5d4037" stroke-width="1" />
+            <rect x="680" y="15" width="120" height="20" rx="10" fill="rgba(0,0,0,0.7)" stroke="#bcaaa4" stroke-width="1" />
+            <text x="740" y="29" fill="#ffd54f" font-size="11" font-family="'Noto Serif TC', serif" font-weight="bold" text-anchor="middle">🏹 烏桓・白狼山</text>
+          </g>
+
+          <!-- ================= 朝鮮半島 (三韓帶方) ================= -->
+          <g id="samhan-terrain">
+            <path d="M 930 80 Q 960 90 965 140 Q 960 180 940 185 Q 930 160 930 110 Z" fill="rgba(76, 175, 80, 0.3)" stroke="#388e3c" stroke-width="1.5" />
+            <rect x="890" y="95" width="115" height="20" rx="10" fill="rgba(0,0,0,0.75)" stroke="#81c784" stroke-width="1" />
+            <text x="947" y="109" fill="#81c784" font-size="11" font-family="'Noto Serif TC', serif" font-weight="bold" text-anchor="middle">🇰🇷 三韓・帶方郡</text>
+          </g>
+
+          <!-- ================= 東瀛日本列島 (邪馬台國・卑彌呼) ================= -->
+          <g id="yamatai-terrain">
+            <!-- 九州與本州島嶼輪廓 -->
+            <path d="M 945 320 Q 980 305 995 340 Q 990 385 965 410 Q 940 400 945 360 Z" fill="rgba(233, 30, 99, 0.22)" stroke="#e91e63" stroke-width="2" filter="url(#shadow)" />
+            <!-- 富士山剪影 -->
+            <polygon points="980,335 990,320 1000,335" fill="rgba(255,255,255,0.7)" stroke="#e91e63" stroke-width="1" />
+            <!-- 櫻花光環與地標 -->
+            <ellipse cx="965" cy="360" rx="35" ry="45" fill="none" stroke="rgba(233, 30, 99, 0.4)" stroke-width="1.5" stroke-dasharray="3,3" />
+            <rect x="895" y="325" width="135" height="20" rx="10" fill="rgba(0,0,0,0.8)" stroke="#f48fb1" stroke-width="1" />
+            <text x="962" y="339" fill="#f48fb1" font-size="11" font-family="'Noto Serif TC', serif" font-weight="bold" text-anchor="middle">🌸 邪馬台（東瀛日本）</text>
+          </g>
+
+          <!-- ================= 西域絲綢之路與天山 (大宛汗血國) ================= -->
+          <g id="dayuan-silk-terrain">
+            <!-- 天山雪峰群 -->
+            <polygon points="20,225 45,175 70,225" fill="rgba(255,255,255,0.25)" stroke="#90caf9" stroke-width="1" />
+            <polygon points="60,230 85,185 110,230" fill="rgba(255,255,255,0.2)" stroke="#90caf9" stroke-width="1" />
+            <!-- 絲路商隊路徑光流 -->
+            <path d="M 45 210 Q 100 240 160 260" fill="none" stroke="rgba(255, 215, 0, 0.35)" stroke-width="3" stroke-dasharray="6,3" />
+            <rect x="5" y="170" width="125" height="20" rx="10" fill="rgba(0,0,0,0.8)" stroke="#ffd54f" stroke-width="1" />
+            <text x="67" y="184" fill="#ffd54f" font-size="11" font-family="'Noto Serif TC', serif" font-weight="bold" text-anchor="middle">🐫 大宛・汗血汗國</text>
+          </g>
+
+          <!-- ================= 西羌青藏雪域 (積石山) ================= -->
+          <g id="xiqiang-terrain">
+            <polygon points="80,450 110,390 140,450" fill="rgba(178, 223, 219, 0.25)" stroke="#00897b" stroke-width="1.5" />
+            <polygon points="40,460 70,410 100,460" fill="rgba(178, 223, 219, 0.2)" stroke="#00897b" stroke-width="1" />
+            <rect x="50" y="390" width="120" height="20" rx="10" fill="rgba(0,0,0,0.8)" stroke="#80cbc4" stroke-width="1" />
+            <text x="110" y="404" fill="#80cbc4" font-size="11" font-family="'Noto Serif TC', serif" font-weight="bold" text-anchor="middle">🏔️ 西羌・積石雪山</text>
+          </g>
+
+          <!-- ================= 極南蠻荒叢林 (八納洞) ================= -->
+          <g id="banadong-terrain">
+            <path d="M 30 650 Q 80 620 130 660 L 110 700 L 20 700 Z" fill="rgba(51, 105, 30, 0.3)" stroke="#33691e" stroke-width="1.5" />
+            <rect x="15" y="630" width="120" height="20" rx="10" fill="rgba(0,0,0,0.8)" stroke="#aed581" stroke-width="1" />
+            <text x="75" y="644" fill="#aed581" font-size="11" font-family="'Noto Serif TC', serif" font-weight="bold" text-anchor="middle">🐘 八納洞（南蠻巨象）</text>
+          </g>
+
+          <!-- ================= 萬里長城 ================= -->
+          <path d="M 230 280 Q 450 190 620 170 T 880 90" fill="none" stroke="#6d4c41" stroke-width="4.5" stroke-dasharray="6,3" opacity="0.65" />
+          <text x="480" y="185" fill="rgba(215, 204, 200, 0.45)" font-size="12" font-family="'Noto Serif TC', serif" letter-spacing="2">【萬里長城】</text>
+
+          <!-- ================= 黃河巨流 ================= -->
+          <path d="M 160 290 Q 250 270 320 300 T 400 230 T 520 220 T 600 310 T 730 250 T 860 260" fill="none" stroke="rgba(255, 183, 77, 0.6)" stroke-width="7" stroke-linecap="round" />
+          <text x="440" y="215" fill="rgba(255, 204, 128, 0.75)" font-size="13" font-family="'Noto Serif TC', serif" font-weight="bold">黃 河 〰️</text>
+
+          <!-- ================= 長江巨流 ================= -->
+          <path d="M 220 590 Q 320 530 440 510 T 590 500 T 720 470 T 840 440 T 930 430" fill="none" stroke="rgba(41, 182, 246, 0.7)" stroke-width="8.5" stroke-linecap="round" />
+          <text x="630" y="490" fill="rgba(129, 212, 250, 0.85)" font-size="14" font-family="'Noto Serif TC', serif" font-weight="bold">長 江 〰️ 天 險</text>
+
+          <!-- ================= 🏝️ 台灣島 (夷州) ================= -->
+          <g id="taiwan-island-terrain">
+            <!-- 外圍海浪光暈 -->
+            <ellipse cx="935" cy="645" rx="42" ry="50" fill="rgba(0, 230, 118, 0.1)" stroke="rgba(0, 230, 118, 0.45)" stroke-width="1.5" stroke-dasharray="4,2" />
+            <!-- 台灣本島地塊輪廓 (紡錘形島嶼) -->
+            <path d="M 932 602 Q 950 615 948 645 Q 946 675 932 686 Q 920 670 922 640 Q 922 618 932 602 Z" fill="url(#taiwan-gradient)" stroke="#2e7d32" stroke-width="2.5" filter="url(#shadow)" />
+            <!-- 中央山脈脊梁線 -->
+            <path d="M 934 612 Q 940 642 932 674" fill="none" stroke="#1b5e20" stroke-width="2.5" stroke-linecap="round" opacity="0.8" />
+            <!-- 台灣島嶼金色標註 -->
+            <rect x="865" y="585" width="140" height="22" rx="11" fill="rgba(0, 0, 0, 0.85)" stroke="#ffd700" stroke-width="1.5" />
+            <text x="935" y="600" fill="#ffd700" font-size="12" font-family="'Noto Serif TC', serif" font-weight="bold" text-anchor="middle">🏝️ 夷州（台灣島）</text>
+          </g>
+
+          <!-- 海南島輪廓 -->
+          <g id="hainan-island-terrain">
+            <ellipse cx="440" cy="685" rx="24" ry="15" fill="rgba(46, 125, 50, 0.4)" stroke="#2e7d32" stroke-width="1" />
+            <text x="440" y="689" fill="rgba(200, 230, 201, 0.7)" font-size="10" font-weight="bold" text-anchor="middle">朱崖州(海南)</text>
+          </g>
+
+          <!-- 歷史大區水印地理標註 -->
+          <g opacity="0.35" font-family="'Noto Serif TC', serif" font-weight="bold">
+            <text x="590" y="310" fill="#ffe082" font-size="16" letter-spacing="6">【中 原 腹 地】</text>
+            <text x="210" y="480" fill="#80cbc4" font-size="16" letter-spacing="4">【巴 蜀 天 府】</text>
+            <text x="600" y="430" fill="#80deea" font-size="15" letter-spacing="4">【荊 襄 九 郡】</text>
+            <text x="800" y="410" fill="#ef9a9a" font-size="16" letter-spacing="5">【江 東 六 郡】</text>
+            <text x="140" y="610" fill="#ce93d8" font-size="14" letter-spacing="3">【南 蠻 沃 野】</text>
+            <text x="350" y="610" fill="#b0bec5" font-size="14" letter-spacing="3">【嶺 南 越 地】</text>
+          </g>
+        </g>
+
+          <!-- 海南島輪廓 -->
+          <g id="hainan-island-terrain">
+            <ellipse cx="440" cy="685" rx="22" ry="14" fill="rgba(46, 125, 50, 0.4)" stroke="#2e7d32" stroke-width="1" />
+            <text x="440" y="688" fill="rgba(200, 230, 201, 0.6)" font-size="9" text-anchor="middle">朱崖州(海南)</text>
+          </g>
+
+          <!-- 歷史大區水印地理標註 -->
+          <g opacity="0.35" font-family="'Noto Serif TC', serif" font-weight="bold">
+            <text x="130" y="220" fill="#ffd54f" font-size="14" letter-spacing="3">【西域・絲路】</text>
+            <text x="890" y="60" fill="#90caf9" font-size="14" letter-spacing="3">【幽州・遼東】</text>
+            <text x="600" y="140" fill="#a5d6a7" font-size="14" letter-spacing="4">【并冀燕趙】</text>
+            <text x="600" y="320" fill="#ffe082" font-size="16" letter-spacing="6">【中 原 腹 地】</text>
+            <text x="210" y="490" fill="#80cbc4" font-size="16" letter-spacing="4">【巴 蜀 天 府】</text>
+            <text x="610" y="440" fill="#80deea" font-size="15" letter-spacing="4">【荊 襄 九 郡】</text>
+            <text x="820" y="420" fill="#ef9a9a" font-size="16" letter-spacing="5">【江 東 六 郡】</text>
+            <text x="130" y="620" fill="#ce93d8" font-size="14" letter-spacing="3">【南 蠻 沃 野】</text>
+            <text x="360" y="620" fill="#b0bec5" font-size="14" letter-spacing="3">【嶺 南 越 地】</text>
+          </g>
+        </g>
+        
+        <!-- 連接道路 (動態生成) -->
+        <g id="map-routes-group"></g>
+        
+        <!-- 城市節點 (動態生成) -->
+        <g id="map-cities-group"></g>
+      </svg>
+    </section>
+
+    <!-- 右側面板：城市情報與駐防武將 -->
+    <section class="right-panel">
+      <div class="city-detail-card glass-panel" id="city-detail-panel">
+        <div class="city-header">
+          <div class="city-title" id="detail-city-name">請選擇城市</div>
+          <div class="city-owner" id="detail-city-faction" style="background-color: #555;">未選擇</div>
+        </div>
+        
+        <div style="text-align: center; margin-bottom: 15px; display: none;" id="detail-city-diplomacy-container">
+          <span style="font-size: 0.9rem; color: #aaa; background: rgba(0,0,0,0.5); padding: 4px 12px; border-radius: 12px; border: 1px solid #555;" id="detail-city-diplomacy">外交狀態：-</span>
+        </div>
+        
+        <div class="city-attrs">
+          <div class="attr-row-container">
+            <div class="attr-row">
+              <span class="attr-label">農業開發</span>
+              <span class="attr-value" id="val-agriculture">0 / 0</span>
+            </div>
+            <div class="attr-bar-container">
+              <div class="attr-bar" id="bar-agriculture" style="width: 0%;"></div>
+            </div>
+          </div>
+          
+          <div class="attr-row-container">
+            <div class="attr-row">
+              <span class="attr-label">商業貿易</span>
+              <span class="attr-value" id="val-commerce">0 / 0</span>
+            </div>
+            <div class="attr-bar-container">
+              <div class="attr-bar" id="bar-commerce" style="width: 0%;"></div>
+            </div>
+          </div>
+          
+          <div class="attr-row-container">
+            <div class="attr-row">
+              <span class="attr-label">城防禦敵</span>
+              <span class="attr-value" id="val-defense">0 / 0</span>
+            </div>
+            <div class="attr-bar-container">
+              <div class="attr-bar defense" id="bar-defense" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <div class="attr-row-container">
+            <div class="attr-row">
+              <span class="attr-label">駐守兵力</span>
+              <span class="attr-value" id="val-troops">0</span>
+            </div>
+            <div class="attr-bar-container">
+              <div class="attr-bar troops" id="bar-troops" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <div class="attr-row-container">
+            <div class="attr-row">
+              <span class="attr-label">部隊士氣</span>
+              <span class="attr-value" id="val-morale">0%</span>
+            </div>
+            <div class="attr-bar-container">
+              <div class="attr-bar morale" id="bar-morale" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px;">
+            <div class="attr-row" style="background: rgba(0,0,0,0.2); padding: 5px; border-radius: 4px;">
+              <span class="attr-label">庫存黃金</span>
+              <span class="attr-value" id="val-gold">0</span>
+            </div>
+            <div class="attr-row" style="background: rgba(0,0,0,0.2); padding: 5px; border-radius: 4px;">
+              <span class="attr-label">庫存糧草</span>
+              <span class="attr-value" id="val-food">0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="generals-section">
+          <div class="section-title">
+            <span>駐軍武將</span>
+            <span id="detail-generals-count">0 人</span>
+          </div>
+          <div class="generals-list" id="city-generals-list">
+            <div style="text-align: center; color: var(--color-text-dim); margin-top: 20px; font-size: 0.85rem;">點擊地圖城市查看武將</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 浮動指令控制列 (底欄) -->
+    <footer class="command-panel glass-panel" id="command-bar" style="display: none;">
+      <div class="command-groups">
+        <!-- 內政組 -->
+        <div class="command-group">
+          <span class="command-group-label">內政</span>
+          <div class="buttons-row">
+            <button class="btn-cmd" id="cmd-develop-agri" onclick="triggerCommand('develop_agri')">開發</button>
+            <button class="btn-cmd" id="cmd-develop-comm" onclick="triggerCommand('develop_comm')">商業</button>
+            <button class="btn-cmd" id="cmd-trade" onclick="triggerCommand('trade')">交易</button>
+            <button class="btn-cmd" id="cmd-fortify" onclick="triggerCommand('fortify')">修築</button>
+            <button class="btn-cmd" id="cmd-tech" onclick="triggerCommand('tech')" style="border-color: #ffd54f; color: #ffe082;">科技</button>
+          </div>
+        </div>
+        
+        <!-- 軍事組 -->
+        <div class="command-group">
+          <span class="command-group-label">軍事</span>
+          <div class="buttons-row">
+            <button class="btn-cmd" id="cmd-conscript" onclick="triggerCommand('conscript')">徵兵</button>
+            <button class="btn-cmd" id="cmd-train" onclick="triggerCommand('train')">訓練</button>
+            <button class="btn-cmd" id="cmd-move" onclick="triggerCommand('move')">移動</button>
+            <button class="btn-cmd" id="cmd-attack" onclick="triggerCommand('attack')" style="border-color: #ff3d00; color: #ff8a65;">出征</button>
+          </div>
+        </div>
+
+        <!-- 人才組 -->
+        <div class="command-group">
+          <span class="command-group-label">人才</span>
+          <div class="buttons-row">
+            <button class="btn-cmd" id="cmd-search" onclick="triggerCommand('search')">探索</button>
+            <button class="btn-cmd" id="cmd-recruit" onclick="triggerCommand('recruit')">登用</button>
+            <button class="btn-cmd" id="cmd-reward" onclick="triggerCommand('reward')">賞賜</button>
+          </div>
+        </div>
+
+        <!-- 計略 -->
+        <div class="command-group">
+          <span class="command-group-label" style="color: #ba68c8;">計略</span>
+          <div class="buttons-row">
+            <button class="btn-cmd" id="cmd-rumor" onclick="triggerCommand('rumor')">流言</button>
+            <button class="btn-cmd" id="cmd-sabotage" onclick="triggerCommand('sabotage')">破壞</button>
+            <button class="btn-cmd" id="cmd-alienate" onclick="triggerCommand('alienate')">離間</button>
+          </div>
+        </div>
+
+        <!-- 外交組 -->
+        <div class="command-group" id="group-diplomacy" style="display: none;">
+          <span class="command-group-label" style="color: #4dd0e1;">外交</span>
+          <div class="buttons-row">
+            <button class="btn-cmd" id="cmd-goodwill" onclick="triggerCommand('goodwill')" style="border-color: #4dd0e1; color: #b2ebf2;">親善</button>
+            <button class="btn-cmd" id="cmd-alliance" onclick="triggerCommand('alliance')" style="border-color: #4dd0e1; color: #b2ebf2;">結盟</button>
+            <button class="btn-cmd" id="cmd-break-alliance" onclick="triggerCommand('break_alliance')" style="border-color: #ff5252; color: #ff8a80;">破棄</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 回合結束按鈕 -->
+      <div>
+        <button class="btn-end-turn" id="end-turn-btn">下 個 月</button>
+      </div>
+    </footer>
+  </main>
+
+  <!-- ==================== 彈出視窗與模態框 ==================== -->
+
+  <!-- 遊戲開始：劇本與勢力選擇 overlay -->
+  <div class="modal-overlay" id="start-overlay">
+    <div class="start-modal glass-panel gold-border" style="max-width: 600px;">
+      <h1>三國志：逐鹿中原</h1>
+      <p class="subtitle">東漢末年，群雄割據。請選擇劇本與勢力，完成天下一統的大業！</p>
+      
+      <!-- 劇本選擇區 -->
+      <div id="scenario-selection-area">
+        <h3 style="color: var(--color-gold); margin-bottom: 10px; border-bottom: 1px solid rgba(255,215,0,0.3); padding-bottom: 5px;">第一步：選擇劇本</h3>
+        <div class="faction-select-grid" id="scenario-select-container" style="grid-template-columns: 1fr;">
+          <!-- JS 動態渲染劇本卡片 -->
+        </div>
+        <div class="faction-preview-desc" id="scenario-preview-text">
+          請點擊上方劇本，查看時代背景。
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-start-game" id="confirm-scenario-btn" disabled style="flex:1;">確認劇本</button>
+          <button class="btn-start-game" id="btn-open-custom-lord" style="background: linear-gradient(135deg, #d4af37 0%, #b71c1c 100%); color: #fff; border-color: #ffd54f; font-weight: bold; flex:1;">👑 自創君主立足</button>
+        </div>
+      </div>
+
+      <!-- 勢力選擇區 (初始隱藏) -->
+      <div id="faction-selection-area" style="display: none;">
+        <h3 style="color: var(--color-gold); margin-bottom: 10px; border-bottom: 1px solid rgba(255,215,0,0.3); padding-bottom: 5px;">第二步：選擇勢力</h3>
+        <div class="faction-select-grid" id="faction-select-container">
+          <!-- JS 動態渲染勢力卡片 -->
+        </div>
+        
+        <div class="faction-preview-desc" id="faction-preview-text">
+          請點擊上方勢力頭像，查看其介紹與開局實力。
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-start-game" id="back-to-scenario-btn" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3);">返回劇本</button>
+          <button class="btn-start-game" id="start-game-btn" disabled>開始逐鹿</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 戰鬥畫面 overlay (日式光榮三國志風格) -->
+  <div class="modal-overlay hidden" id="battle-overlay">
+    <div class="battle-modal koei-battle-modal" id="battle-box">
+      <!-- 戰場背景層 -->
+      <div class="battlefield-bg" id="battlefield-bg"></div>
+      <div class="battlefield-overlay"></div>
+      
+      <!-- 刀光與打擊特效層 -->
+      <div class="battle-slash-layer" id="battle-slash-layer"></div>
+      
+      <!-- 日式奧義與一騎討切入橫幅 (Cut-in Banner) -->
+      <div class="koei-cutin-banner hidden" id="battle-cutin-banner">
+        <div class="cutin-bg-slash"></div>
+        <div class="cutin-kanji-text" id="battle-cutin-text">一 騎 討 ち</div>
+        <div class="cutin-subtext" id="battle-cutin-subtext">名 將 巔 峰 對 決</div>
+      </div>
+
+      <!-- 頂部日式黑金戰報橫幅 -->
+      <div class="battle-banner koei-banner">
+        <div class="battle-banner-left" id="battle-att-faction-banner">
+          <span class="koei-banner-flag">軍</span>
+          <span class="banner-name">攻方軍團</span>
+        </div>
+        <div class="battle-banner-center">
+          <div class="battle-plaque">
+            <span class="battle-title" id="battle-title-text">⚔️ 合戰・野戰決戰</span>
+          </div>
+          <div class="battle-subtitle" id="battle-subtitle-text">洛陽 爭奪戰</div>
+          <div class="battle-round-indicator" id="battle-round-text">第一回合</div>
+        </div>
+        <div class="battle-banner-right" id="battle-def-faction-banner">
+          <span class="banner-name">守方軍團</span>
+          <span class="koei-banner-flag def">城</span>
+        </div>
+      </div>
+
+      <!-- 主戰場區域 -->
+      <div class="battlefield-main">
+        <!-- 左軍(攻方)陣型 -->
+        <div class="army-formation attacker-side koei-army-panel">
+          <div class="formation-banner attacker-banner">
+            <span class="banner-icon">⚔️</span> 進攻主力陣營
+          </div>
+          <div class="general-card-battle koei-general-card">
+            <div class="battle-general-portrait-large" id="battle-att-portrait">
+              <span class="unit-type-badge" id="battle-att-unit-badge">騎</span>
+            </div>
+            <div class="general-card-info">
+              <div class="general-card-name" id="battle-att-gen-name" style="color: #90caf9;">攻擊將</div>
+              <div class="general-trait-badge" id="battle-att-trait-badge">【常勝】</div>
+              <div class="general-card-stats-grid">
+                <div class="stat-pill"><span>統率</span><b id="battle-att-lead">0</b></div>
+                <div class="stat-pill"><span>武力</span><b id="battle-att-str">0</b></div>
+                <div class="stat-pill"><span>智力</span><b id="battle-att-int">0</b></div>
+              </div>
+              <div class="unit-advantage-tag" id="battle-att-adv-tag">平手</div>
+            </div>
+          </div>
+          
+          <div class="troop-display koei-troop-display">
+            <div class="troop-header">
+              <span class="troop-label">當前兵力</span>
+              <div class="troop-number" id="battle-att-troops">0</div>
+            </div>
+            <div class="troop-bar-bg">
+              <div class="troop-bar-fill" id="battle-att-troop-bar" style="width: 100%;"></div>
+            </div>
+          </div>
+
+          <div class="morale-display koei-morale-display">
+            <div class="morale-header">
+              <span class="morale-label">軍團士氣</span>
+              <span class="morale-value"><b id="battle-att-morale">100</b> / 100</span>
+            </div>
+            <div class="morale-bar-bg">
+              <div class="morale-bar-fill attacker-morale" id="battle-att-morale-bar" style="width: 100%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 中央對決區 (含單挑場景 & 戰鬥動畫) -->
+        <div class="clash-zone koei-clash-zone">
+          <!-- 單挑UI (一騎討ち) -->
+          <div class="duel-health-container koei-duel-box" id="duel-ui" style="display: none;">
+            <div class="duel-title-stamp">一 騎 討 ち</div>
+            <div class="duel-bars-wrapper">
+              <div class="health-bar-wrapper">
+                <div class="duel-name-row">
+                  <span class="health-bar-label" id="duel-att-name">武將 A</span>
+                  <span class="duel-hp-val" id="duel-att-hp-val">100</span>
+                </div>
+                <div class="health-bar-bg">
+                  <div class="health-bar-fill att-fill" id="duel-att-hp" style="width: 100%;"></div>
+                </div>
+              </div>
+              
+              <div class="duel-vs-emblem">VS</div>
+              
+              <div class="health-bar-wrapper" style="text-align: right;">
+                <div class="duel-name-row" style="justify-content: flex-end;">
+                  <span class="duel-hp-val" id="duel-def-hp-val">100</span>
+                  <span class="health-bar-label" id="duel-def-name">武將 B</span>
+                </div>
+                <div class="health-bar-bg">
+                  <div class="health-bar-fill def-fill" id="duel-def-hp" style="width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 對衝武將頭像與刀光動畫 -->
+          <div class="clash-avatars">
+            <div class="visual-unit attacker" id="vis-att"></div>
+            <div class="clash-emblem-center" id="clash-sparks">⚔️</div>
+            <div class="visual-unit defender" id="vis-def"></div>
+          </div>
+
+          <!-- 浮動傷害顯示容器 -->
+          <div class="damage-popups-container" id="damage-popups"></div>
+
+          <!-- 單挑台詞氣泡 -->
+          <div class="duel-dialogue koei-dialogue" id="duel-dialogue-box" style="display: none;">「吃我一刀！」</div>
+
+          <!-- 戰場特效戰法描述 -->
+          <div class="battle-action-text koei-action-text" id="battle-action-text"></div>
+        </div>
+
+        <!-- 右軍(守方)陣型 -->
+        <div class="army-formation defender-side koei-army-panel">
+          <div class="formation-banner defender-banner">
+            <span class="banner-icon">🏯</span> 城池防守陣營
+          </div>
+          <div class="general-card-battle koei-general-card">
+            <div class="battle-general-portrait-large" id="battle-def-portrait">
+              <span class="unit-type-badge def" id="battle-def-unit-badge">步</span>
+            </div>
+            <div class="general-card-info">
+              <div class="general-card-name" id="battle-def-gen-name" style="color: #ef9a9a;">防禦將</div>
+              <div class="general-trait-badge" id="battle-def-trait-badge">【堅守】</div>
+              <div class="general-card-stats-grid">
+                <div class="stat-pill"><span>統率</span><b id="battle-def-lead">0</b></div>
+                <div class="stat-pill"><span>武力</span><b id="battle-def-str">0</b></div>
+                <div class="stat-pill"><span>智力</span><b id="battle-def-int">0</b></div>
+              </div>
+              <div class="unit-advantage-tag" id="battle-def-adv-tag">平手</div>
+            </div>
+          </div>
+
+          <div class="troop-display koei-troop-display">
+            <div class="troop-header">
+              <span class="troop-label">當前兵力</span>
+              <div class="troop-number" id="battle-def-troops">0</div>
+            </div>
+            <div class="troop-bar-bg">
+              <div class="troop-bar-fill def" id="battle-def-troop-bar" style="width: 100%;"></div>
+            </div>
+          </div>
+
+          <div class="morale-display koei-morale-display">
+            <div class="morale-header">
+              <span class="morale-label">軍團士氣</span>
+              <span class="morale-value"><b id="battle-def-morale">100</b> / 100</span>
+            </div>
+            <div class="morale-bar-bg">
+              <div class="morale-bar-fill defender-morale" id="battle-def-morale-bar" style="width: 100%;"></div>
+            </div>
+          </div>
+          
+          <!-- 攻城戰專屬：城防值 -->
+          <div class="siege-defense-display koei-siege-display" id="battle-siege-ui" style="display: none;">
+            <div class="morale-header">
+              <span class="morale-label" style="color: #ffb74d;">🏯 堅固城防</span>
+              <span class="morale-value" style="color: #ffb74d;"><b id="battle-def-city-def">0</b> 防禦值</span>
+            </div>
+            <div class="morale-bar-bg" style="border-color: #ffb74d;">
+              <div class="morale-bar-fill siege-defense-fill" id="battle-def-city-bar" style="width: 100%; background: linear-gradient(90deg, #ff9800, #ffb74d);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部戰報日誌 + 日式金箔操作欄 -->
+      <div class="battle-bottom koei-battle-bottom">
+        <div class="battle-logs-scroll" id="battle-logs-box"></div>
+        <div class="battle-footer">
+          <button class="btn-battle-action koei-btn" id="battle-next-btn">⚔ 進 行 下 回 合</button>
+          <button class="btn-battle-action secondary koei-btn-sub" id="battle-skip-btn">⏩ 委 任 自 動 結 算</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 武將詳情彈窗 overlay -->
+  <div class="modal-overlay hidden" id="general-overlay">
+    <div class="general-detail-modal glass-panel">
+      <span class="close-btn" id="close-general-btn">&times;</span>
+      <div class="general-detail-header">
+        <div class="general-detail-portrait" id="gen-det-portrait">將</div>
+        <div class="general-detail-title-group">
+          <div class="general-detail-name" id="gen-det-name">武將名</div>
+          <div class="general-detail-faction" id="gen-det-faction">所屬勢力</div>
+          <div id="gen-det-rank-badge" class="rank-badge" style="display: none;">📜 官職：大都督</div>
+          <div id="gen-det-loyalty" style="color: var(--color-gold); font-size: 0.9rem; margin-top: 5px; font-weight: bold;">忠誠: 100</div>
+        </div>
+      </div>
+      
+      <div class="general-detail-bio" id="gen-det-desc">
+        武將簡介...
+      </div>
+      
+      <!-- 武將歷練等級與經驗槽 -->
+      <div class="gen-level-container" id="gen-det-level-box">
+        <div class="gen-level-header">
+          <span class="gen-level-badge" id="gen-det-lvl-badge">Lv. 1 🌱 初露鋒芒</span>
+          <span class="gen-exp-text" id="gen-det-exp-text">EXP: 0 / 100</span>
+        </div>
+        <div class="gen-exp-bar-bg">
+          <div class="gen-exp-bar-fill" id="gen-det-exp-bar" style="width: 0%;"></div>
+        </div>
+        <div class="gen-free-points" id="gen-det-free-points-row" style="display: none;">
+          <span>🌟 可分配歷練潛能點：<b id="gen-det-free-points" style="color:#ffd54f; font-size:1.1rem;">0</b></span>
+        </div>
+      </div>
+
+      <!-- 羈絆親密度槽 -->
+      <div class="bond-meter-container" id="gen-det-bond-container">
+        <div class="bond-meter-header">
+          <span>🤝 君主親密羈絆</span>
+          <span id="gen-det-bond-val">0 / 100</span>
+        </div>
+        <div class="bond-meter-bg">
+          <div class="bond-meter-fill" id="gen-det-bond-bar" style="width: 0%;"></div>
+        </div>
+      </div>
+      
+      <!-- 武將互動操作按鈕 (拜訪、修煉、結義、提親) -->
+      <div class="general-action-buttons-grid" id="gen-det-actions-grid" style="grid-template-columns: repeat(4, 1fr);">
+        <button class="btn-gen-action" id="btn-gen-visit">🍶 設宴暢談</button>
+        <button class="btn-gen-action" id="btn-gen-spar">⚔️ 切磋修煉</button>
+        <button class="btn-gen-action gold" id="btn-gen-swear">🌸 義結金蘭</button>
+        <button class="btn-gen-action marry" id="btn-gen-marry" style="border-color:#ff80ab; color:#ff80ab;">💍 提親結締</button>
+      </div>
+
+      <!-- 奧義覺醒特技卡片 -->
+      <div id="gen-det-ultimate-box" class="gen-ultimate-card" style="display: none; margin-bottom: 12px;">
+        <div class="ultimate-header">
+          <span class="ultimate-icon" id="gen-ult-icon">🐉</span>
+          <div>
+            <span class="ultimate-title">🔥 專屬奧義覺醒：</span><b id="gen-ult-name" style="color:#ffd54f;">武聖神威</b>
+          </div>
+        </div>
+        <div class="ultimate-desc" id="gen-ult-desc" style="font-size:0.8rem; color:#ffe082; margin-top:3px;"></div>
+      </div>
+
+      <div id="gen-det-trait-container" style="display: none; margin-bottom: 15px; padding: 10px; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--color-gold); border-radius: 4px;">
+        <div style="font-weight: bold; color: var(--color-gold); margin-bottom: 5px;">🌟 特技：<span id="gen-det-trait-name"></span></div>
+        <div id="gen-det-trait-desc" style="font-size: 0.85rem; color: #ddd;"></div>
+      </div>
+      
+      <div class="general-detail-stats">
+        <div class="detail-stat-row">
+          <span class="detail-stat-label">統率</span>
+          <div class="detail-stat-bar-bg">
+            <div class="detail-stat-bar-fill" id="bar-det-lead" style="width: 0%;"></div>
+          </div>
+          <span class="detail-stat-value" id="val-det-lead">0</span>
+          <button class="btn-stat-plus" id="btn-plus-lead" title="加點統率">+</button>
+        </div>
+        
+        <div class="detail-stat-row">
+          <span class="detail-stat-label">武力</span>
+          <div class="detail-stat-bar-bg">
+            <div class="detail-stat-bar-fill" id="bar-det-str" style="width: 0%;"></div>
+          </div>
+          <span class="detail-stat-value" id="val-det-str">0</span>
+          <button class="btn-stat-plus" id="btn-plus-str" title="加點武力">+</button>
+        </div>
+        
+        <div class="detail-stat-row">
+          <span class="detail-stat-label">智力</span>
+          <div class="detail-stat-bar-bg">
+            <div class="detail-stat-bar-fill" id="bar-det-int" style="width: 0%;"></div>
+          </div>
+          <span class="detail-stat-value" id="val-det-int">0</span>
+          <button class="btn-stat-plus" id="btn-plus-int" title="加點智力">+</button>
+        </div>
+        
+        <div class="detail-stat-row">
+          <span class="detail-stat-label">政治</span>
+          <div class="detail-stat-bar-bg">
+            <div class="detail-stat-bar-fill" id="bar-det-pol" style="width: 0%;"></div>
+          </div>
+          <span class="detail-stat-value" id="val-det-pol">0</span>
+          <button class="btn-stat-plus" id="btn-plus-pol" title="加點政治">+</button>
+        </div>
+        
+        <div class="detail-stat-row">
+          <span class="detail-stat-label">魅力</span>
+          <div class="detail-stat-bar-bg">
+            <div class="detail-stat-bar-fill" id="bar-det-cha" style="width: 0%;"></div>
+          </div>
+          <span class="detail-stat-value" id="val-det-cha">0</span>
+          <button class="btn-stat-plus" id="btn-plus-cha" title="加點魅力">+</button>
+        </div>
+      </div>
+      
+      <div id="gen-det-items" style="margin-top: 15px; border-top: 1px solid var(--color-panel-border); padding-top: 10px; display: none;">
+        <span style="color: var(--color-gold); font-size: 0.9rem; font-weight: bold; margin-bottom: 5px; display: block;">裝備寶物</span>
+        <div id="gen-det-items-list" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 下拉/彈出武將選擇器（用於指派任務，內置的 HTML5 選擇彈窗） -->
+  <div class="modal-overlay hidden" id="selector-overlay">
+    <div class="general-detail-modal glass-panel" style="width: 480px;">
+      <span class="close-btn" id="close-selector-btn">&times;</span>
+      <div style="border-bottom: 2px solid var(--color-gold); padding-bottom: 10px; margin-bottom: 15px;">
+        <h3 id="selector-title" style="color: var(--color-gold-bright);">選擇執行武將</h3>
+        <p id="selector-desc" style="font-size: 0.8rem; color: var(--color-text-dim); margin-top: 4px;">請選擇武將以執行該項政令（不同武將屬性會影響成效）</p>
+      </div>
+      
+      <div style="max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;" id="selector-list">
+        <!-- JS 動態插入武將選擇清單 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 出征/移動兵力配置彈窗 -->
+  <div class="modal-overlay hidden" id="dispatch-overlay">
+    <div class="general-detail-modal glass-panel" style="width: 420px; text-align: center;">
+      <span class="close-btn" id="close-dispatch-btn">&times;</span>
+      <div style="border-bottom: 2px solid var(--color-gold); padding-bottom: 10px; margin-bottom: 15px;">
+        <h3 id="dispatch-title" style="color: #ff3d00;">出征配置</h3>
+      </div>
+      
+      <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px;">
+        <div class="general-portrait-small" id="dispatch-gen-portrait" style="width: 70px; height: 70px;"></div>
+        <div style="text-align: left;">
+          <div style="font-weight: bold; font-size: 1.2rem; color: #fff;" id="dispatch-gen-name">武將名</div>
+          <div style="color: var(--color-gold); font-size: 0.9rem;" id="dispatch-route">長安 ➔ 洛陽</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 10px; text-align: left; padding: 0 10px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="color: var(--color-text-dim);">派遣兵力</span>
+          <span style="color: #fff; font-weight: bold; font-size: 1.1rem;" id="dispatch-troops-val">0</span>
+        </div>
+        <input type="range" id="dispatch-troops-slider" min="0" max="10000" value="0" style="width: 100%; accent-color: #ff3d00;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; margin-top: 5px;">
+          <span>0</span>
+          <span id="dispatch-troops-max">10000</span>
+        </div>
+      </div>
+
+      <div id="dispatch-transport-area" style="margin-bottom: 25px; text-align: left; padding: 0 10px; display: none;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="color: var(--color-gold);">運送黃金</span>
+          <span style="color: #fff; font-weight: bold; font-size: 1.1rem;" id="dispatch-gold-val">0</span>
+        </div>
+        <input type="range" id="dispatch-gold-slider" min="0" max="1000" value="0" style="width: 100%; accent-color: var(--color-gold);">
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; margin-top: 5px;">
+          <span>0</span>
+          <span id="dispatch-gold-max">1000</span>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; margin-top: 15px;">
+          <span style="color: #81c784;">運送糧草</span>
+          <span style="color: #fff; font-weight: bold; font-size: 1.1rem;" id="dispatch-food-val">0</span>
+        </div>
+        <input type="range" id="dispatch-food-slider" min="0" max="10000" value="0" style="width: 100%; accent-color: #81c784;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; margin-top: 5px;">
+          <span>0</span>
+          <span id="dispatch-food-max">10000</span>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 25px; text-align: left; padding: 0 10px;">
+        <span style="color: var(--color-text-dim); display: block; margin-bottom: 5px;">戰前計策</span>
+        <select id="dispatch-stratagem-select" style="width: 100%; padding: 8px; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid var(--color-gold); border-radius: 4px; font-size: 0.9rem; outline: none;">
+          <option value="none">無戰術 (常規作戰)</option>
+          <option value="fire">火攻 (需智力 80+，燒毀敵軍大量兵力)</option>
+          <option value="defend">堅守 (需統率 80+，降低我方戰損)</option>
+          <option value="charge">突擊 (需武力 85+，雙方兵力大幅損耗)</option>
+        </select>
+      </div>
+
+      <button class="btn-battle-action" id="dispatch-confirm-btn" style="width: 100%;">確 認 發 兵</button>
+    </div>
+  </div>
+
+  <!-- 結局畫面 (天下一統 / 勢力滅亡) -->
+  <div class="modal-overlay hidden" id="ending-overlay" style="z-index: 9999; background: rgba(0,0,0,0.95);">
+    <div class="start-modal glass-panel" id="ending-modal" style="border: 2px solid var(--color-gold); max-width: 600px; text-align: center;">
+      <h1 id="ending-title" style="font-size: 3rem; margin-bottom: 10px; color: var(--color-gold-bright); text-shadow: 0 0 15px var(--color-gold);">天 下 一 統</h1>
+      <p class="subtitle" id="ending-subtitle" style="font-size: 1.2rem; color: #ddd; margin-bottom: 20px;">歷經數十載征戰，天下終於重歸一統！</p>
+      
+      <div id="ending-image" style="width: 100%; height: 300px; background-size: cover; background-position: center; border-radius: 8px; border: 2px solid #555; margin-bottom: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.8);"></div>
+      
+      <div style="font-size: 1.1rem; color: var(--color-text); margin-bottom: 30px; line-height: 1.6;" id="ending-desc">
+        將軍的豐功偉業將名垂青史！
+      </div>
+
+      <button class="btn-start-game" id="restart-game-btn" onclick="location.reload()" style="background: var(--color-gold); color: #000;">重 新 開 始</button>
+    </div>
+  </div>
+
+  <!-- 賞賜類型選擇彈窗 -->
+  <div class="modal-overlay hidden" id="reward-type-overlay" style="z-index: 1000;">
+    <div class="general-detail-modal glass-panel" style="width: 300px; text-align: center;">
+      <span class="close-btn" id="close-reward-type-btn">&times;</span>
+      <h3 style="color: var(--color-gold-bright); margin-bottom: 20px;">選擇賞賜方式</h3>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button class="btn-battle-action" id="btn-reward-gold" style="width: 100%;">賞賜黃金 (花費 50 金)</button>
+        <button class="btn-battle-action" id="btn-reward-item" style="width: 100%; border-color: #ba68c8; color: #ce93d8;">賞賜寶物 (從國庫中挑選)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 寶物選擇器彈窗 -->
+  <div class="modal-overlay hidden" id="item-selector-overlay" style="z-index: 1000;">
+    <div class="general-detail-modal glass-panel" style="width: 480px;">
+      <span class="close-btn" id="close-item-selector-btn">&times;</span>
+      <div style="border-bottom: 2px solid #ba68c8; padding-bottom: 10px; margin-bottom: 15px;">
+        <h3 style="color: #ce93d8;">選擇賞賜寶物</h3>
+        <p style="font-size: 0.8rem; color: var(--color-text-dim); margin-top: 4px;">請挑選要賞賜給武將的寶物</p>
+      </div>
+      <div style="max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;" id="item-selector-list">
+        <!-- JS 動態插入寶物選擇清單 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 交易系統彈窗 -->
+  <div class="modal-overlay hidden" id="trade-overlay" style="z-index: 1000;">
+    <div class="general-detail-modal glass-panel" style="width: 400px; text-align: center;">
+      <span class="close-btn" id="close-trade-btn">&times;</span>
+      <h3 style="color: var(--color-gold-bright); margin-bottom: 10px; border-bottom: 2px solid var(--color-gold); padding-bottom: 10px;">市集交易</h3>
+      
+      <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px;">
+        <div class="general-portrait-small" id="trade-gen-portrait" style="width: 60px; height: 60px;"></div>
+        <div style="text-align: left;">
+          <div style="font-weight: bold; font-size: 1.1rem; color: #fff;" id="trade-gen-name">武將名</div>
+          <div style="color: var(--color-gold); font-size: 0.9rem;" id="trade-rate-text">今日匯率: 10</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <button class="btn-start-game" id="tab-buy-food" style="flex: 1; padding: 8px;">買入糧草</button>
+        <button class="btn-start-game" id="tab-sell-food" style="flex: 1; padding: 8px; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3);">賣出糧草</button>
+      </div>
+
+      <div style="margin-bottom: 20px; text-align: left; padding: 0 10px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="color: var(--color-text-dim);" id="trade-slider-label">交易數量</span>
+          <span style="color: #fff; font-weight: bold; font-size: 1.1rem;" id="trade-amount-val">0</span>
+        </div>
+        <input type="range" id="trade-slider" min="0" max="1000" value="0" style="width: 100%; accent-color: var(--color-gold);">
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; margin-top: 5px;">
+          <span>0</span>
+          <span id="trade-amount-max">1000</span>
+        </div>
+      </div>
+
+      <div style="background: rgba(0,0,0,0.5); padding: 10px; border-radius: 4px; margin-bottom: 20px; text-align: left;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+          <span style="color: #aaa;" id="trade-cost-label">預計花費:</span>
+          <span style="color: var(--color-gold); font-weight: bold;" id="trade-cost-val">0 黃金</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: #aaa;" id="trade-gain-label">預計獲得:</span>
+          <span style="color: #81c784; font-weight: bold;" id="trade-gain-val">0 糧草</span>
+        </div>
+      </div>
+
+      <button class="btn-battle-action" id="trade-confirm-btn" style="width: 100%;">確 認 交 易</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay hidden" id="event-overlay" style="z-index: 10000;">
+    <div class="glass-panel gold-border" style="max-width: 500px; text-align: center; background: rgba(20,0,0,0.95);">
+      <h2 id="event-title" style="color: #ff5252; text-shadow: 0 0 10px #ff5252; margin-bottom: 15px;">歷史事件</h2>
+      <p id="event-desc" style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 25px;">事件描述...</p>
+      
+      <div id="event-options" style="display: flex; flex-direction: column; gap: 10px;">
+        <!-- 動態按鈕 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 勢力科技樹研發 Overlay ==================== -->
+  <div class="modal-overlay hidden" id="tech-overlay" style="z-index: 9500;">
+    <div class="tech-modal glass-panel gold-border" id="tech-box">
+      <div class="tech-header">
+        <div class="tech-title-group">
+          <span class="tech-header-icon">🔬</span>
+          <div>
+            <h2 class="tech-header-title">勢力科技研發・軍略府</h2>
+            <div class="tech-header-sub">掌握前沿兵書與工藝，解鎖精銳特殊兵種與領地增益</div>
+          </div>
+        </div>
+        <div class="tech-header-right">
+          <div class="tech-gold-display">
+            <span>國庫黃金：</span><b id="tech-player-gold">0</b>
+          </div>
+          <button class="tech-close-btn" id="tech-close-btn">✖</button>
+        </div>
+      </div>
+
+      <!-- 科技分類切換分頁 -->
+      <div class="tech-nav-tabs">
+        <button class="tech-tab-btn active" id="tab-military-tech">⚔️ 軍事兵種科技</button>
+        <button class="tech-tab-btn" id="tab-civil-tech">🏛️ 內政經世科技</button>
+      </div>
+
+      <!-- 主內容區：左側科技樹節點網格 + 右側詳細情報面板 -->
+      <div class="tech-main-layout">
+        <!-- 科技樹節點網格 -->
+        <div class="tech-tree-grid" id="tech-tree-grid">
+          <!-- JS 動態生成科技節點卡片 -->
+        </div>
+
+        <!-- 科技詳細面板 -->
+        <div class="tech-detail-panel" id="tech-detail-panel">
+          <div class="tech-detail-header">
+            <span class="tech-detail-icon" id="tech-det-icon">🛡️</span>
+            <div>
+              <div class="tech-det-name" id="tech-det-name">請選擇一項科技</div>
+              <div class="tech-det-tier" id="tech-det-tier">第一階科技</div>
+            </div>
+          </div>
+
+          <div class="tech-det-cost-row">
+            <span>研發費用：</span>
+            <b id="tech-det-cost">0 金</b>
+          </div>
+
+          <div class="tech-det-requires" id="tech-det-requires-box">
+            <span>前置條件：</span>
+            <span id="tech-det-requires-text">無</span>
+          </div>
+
+          <div class="tech-det-desc" id="tech-det-desc">
+            點擊左側科技樹節點，可查看詳細科技效果、解鎖兵種與研發需求。
+          </div>
+
+          <!-- 解鎖特殊兵種展示卡片 -->
+          <div class="tech-unlock-unit-card hidden" id="tech-unlock-unit-box">
+            <div class="unit-card-badge">✨ 解鎖精銳兵種</div>
+            <div class="unit-card-header">
+              <span class="unit-card-icon" id="tech-unit-icon">🐅</span>
+              <span class="unit-card-name" id="tech-unit-name">虎豹驍騎</span>
+            </div>
+            <div class="unit-card-stats" id="tech-unit-stats">
+              <span>攻擊 +50%</span> <span>防禦 +25%</span>
+            </div>
+            <div class="unit-card-desc" id="tech-unit-desc">
+              曹魏天下精銳，衝鋒無視城防減免。
+            </div>
+          </div>
+
+          <button class="btn-research-action" id="btn-research-tech" disabled>請選擇科技</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 朝廷官職與冊封封賞 Overlay ==================== -->
+  <div class="modal-overlay hidden" id="ranks-overlay" style="z-index: 9500;">
+    <div class="ranks-modal glass-panel gold-border" id="ranks-box">
+      <div class="tech-header">
+        <div class="tech-title-group">
+          <span class="tech-header-icon">📜</span>
+          <div>
+            <h2 class="tech-header-title">朝廷誥命・官職冊封府</h2>
+            <div class="tech-header-sub">受漢家天子誥命，冊封麾下名將官職以增益戰力</div>
+          </div>
+        </div>
+        <div class="tech-header-right">
+          <button class="tech-close-btn" id="ranks-close-btn">✖</button>
+        </div>
+      </div>
+
+      <!-- 君主目前官階卡 -->
+      <div class="lord-rank-card" id="lord-rank-card">
+        <div class="lord-rank-badge" id="lord-rank-badge">👑 州刺史</div>
+        <div class="lord-rank-info">
+          <div class="lord-rank-title" id="lord-rank-title">君主爵位：州刺史</div>
+          <div class="lord-rank-desc" id="lord-rank-desc">奉詔鎮守一方，全軍出征帶兵上限：12000</div>
+          <div class="lord-rank-progress" id="lord-rank-progress">晉升下一爵位（州牧）：需佔領 2 座城池（目前 1 座）</div>
+        </div>
+      </div>
+
+      <!-- 官職冊封清單 -->
+      <div class="ranks-list-container" id="ranks-list-container">
+        <!-- JS 動態插入官職任命卡 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 天下成就與榮譽圖鑑 Overlay ==================== -->
+  <div class="modal-overlay hidden" id="achievements-overlay" style="z-index: 9500;">
+    <div class="achievements-modal glass-panel gold-border" id="achievements-box">
+      <div class="tech-header">
+        <div class="tech-title-group">
+          <span class="tech-header-icon">🏆</span>
+          <div>
+            <h2 class="tech-header-title">天下成就・三國榮譽錄</h2>
+            <div class="tech-header-sub">達成三國史詩成就，解鎖全軍永久戰略獎勵</div>
+          </div>
+        </div>
+        <div class="tech-header-right">
+          <div class="achievements-rate-badge" id="achievements-rate-text">完成度 0 / 12</div>
+          <button class="tech-close-btn" id="achievements-close-btn">✖</button>
+        </div>
+      </div>
+
+      <div class="achievements-grid" id="achievements-grid">
+        <!-- JS 動態生成成就徽章卡片 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 自創君主 Overlay ==================== -->
+  <div class="modal-overlay hidden" id="custom-lord-overlay" style="z-index: 9600;">
+    <div class="custom-lord-modal glass-panel gold-border" id="custom-lord-box">
+      <div class="tech-header">
+        <div class="tech-title-group">
+          <span class="tech-header-icon">👑</span>
+          <div>
+            <h2 class="tech-header-title">自創君主・登堂入室</h2>
+            <div class="tech-header-sub">創造專屬三國雄主，設定五維、特技、旗號與初始立足之城</div>
+          </div>
+        </div>
+        <div class="tech-header-right">
+          <button class="tech-close-btn" id="custom-lord-close-btn">✖</button>
+        </div>
+      </div>
+
+      <div class="custom-lord-body">
+        <!-- 左側：立繪選擇與君主預覽 -->
+        <div class="custom-lord-left">
+          <div class="custom-lord-preview-card">
+            <div class="custom-lord-portrait-large" id="custom-lord-portrait-preview" style="background-image: url('portraits/custom_lord_1.jpg');"></div>
+            <div class="custom-lord-banner-preview" id="custom-lord-banner-preview" style="background: #c62828;">
+              <span id="custom-banner-text">龍</span>
+            </div>
+            <div class="custom-lord-name-preview" id="custom-lord-name-preview">趙無雙 (字 凌天)</div>
+          </div>
+
+          <div class="custom-portraits-selector-row">
+            <label style="font-size:0.85rem; color:#ffd54f; font-weight:bold; display:block; margin-bottom:5px;">選擇君主立繪：</label>
+            <div class="custom-portraits-grid" id="custom-portraits-grid">
+              <!-- JS 動態生成頭像縮圖 -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 右側：設定表單與五維點數分配 -->
+        <div class="custom-lord-right">
+          <div class="custom-form-row">
+            <div class="form-group">
+              <label>君主姓名</label>
+              <input type="text" id="custom-name-input" value="趙無雙" maxlength="6" class="custom-input">
+            </div>
+            <div class="form-group">
+              <label>表字</label>
+              <input type="text" id="custom-courtesy-input" value="凌天" maxlength="6" class="custom-input">
+            </div>
+            <div class="form-group">
+              <label>軍旗大字</label>
+              <input type="text" id="custom-banner-input" value="龍" maxlength="2" class="custom-input" style="text-align:center; font-weight:bold;">
+            </div>
+          </div>
+
+          <div class="custom-form-row">
+            <div class="form-group">
+              <label>勢力旗幟色</label>
+              <select id="custom-color-select" class="custom-select">
+                <option value="#c62828">赤炎紅</option>
+                <option value="#1565c0">帝國藍</option>
+                <option value="#2e7d32">翡翠綠</option>
+                <option value="#6a1b9a">紫晶幽</option>
+                <option value="#f57f17">琥珀金</option>
+                <option value="#00838f">玄水青</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>初始立足城池</label>
+              <select id="custom-city-select" class="custom-select">
+                <!-- JS 動態填入城池清單 -->
+              </select>
+            </div>
+            <div class="form-group">
+              <label>君主專屬特技</label>
+              <select id="custom-trait-select" class="custom-select">
+                <option value="god_of_war">【武聖】戰鬥傷害+30%</option>
+                <option value="divine_calc">【神算】計略必成且威力翻倍</option>
+                <option value="flying_gen">【飛將】突擊+50%無視城防</option>
+                <option value="virtue">【仁德】每月士氣自增，招降率高</option>
+                <option value="commerce">【霸道】季收金錢稅收+30%</option>
+                <option value="cavalry_master">【鐵騎】騎兵戰鬥力大幅增加</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 五維點數分配器 -->
+          <div class="custom-stats-allocator">
+            <div class="allocator-header">
+              <span style="font-weight:bold; color:#ffd54f;">五維屬性分配</span>
+              <span>剩餘可用潛能點：<b id="custom-stat-pool" style="color:#81c784; font-size:1.1rem;">50</b></span>
+            </div>
+
+            <div class="stat-slider-row">
+              <span class="stat-name">統率：<b id="custom-val-lead">75</b></span>
+              <button class="btn-step" id="btn-dec-lead">-</button>
+              <button class="btn-step" id="btn-inc-lead">+</button>
+            </div>
+            <div class="stat-slider-row">
+              <span class="stat-name">武力：<b id="custom-val-str">75</b></span>
+              <button class="btn-step" id="btn-dec-str">-</button>
+              <button class="btn-step" id="btn-inc-str">+</button>
+            </div>
+            <div class="stat-slider-row">
+              <span class="stat-name">智力：<b id="custom-val-int">75</b></span>
+              <button class="btn-step" id="btn-dec-int">-</button>
+              <button class="btn-step" id="btn-inc-int">+</button>
+            </div>
+            <div class="stat-slider-row">
+              <span class="stat-name">政治：<b id="custom-val-pol">75</b></span>
+              <button class="btn-step" id="btn-dec-pol">-</button>
+              <button class="btn-step" id="btn-inc-pol">+</button>
+            </div>
+            <div class="stat-slider-row">
+              <span class="stat-name">魅力：<b id="custom-val-cha">80</b></span>
+              <button class="btn-step" id="btn-dec-cha">-</button>
+              <button class="btn-step" id="btn-inc-cha">+</button>
+            </div>
+          </div>
+
+          <button class="btn-launch-custom-lord" id="btn-launch-custom-lord">🚀 登基立足・啟程爭霸</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 家族譜系與子嗣府 Overlay ==================== -->
+  <div class="modal-overlay hidden" id="family-overlay" style="z-index: 9500;">
+    <div class="family-modal glass-panel gold-border" id="family-box">
+      <div class="tech-header">
+        <div class="tech-title-group">
+          <span class="tech-header-icon">👶</span>
+          <div>
+            <h2 class="tech-header-title">宗室宗正・家族子嗣府</h2>
+            <div class="tech-header-sub">君主配偶、宗室世系、少主導師教導與成年出仕</div>
+          </div>
+        </div>
+        <div class="tech-header-right">
+          <button class="tech-close-btn" id="family-close-btn">✖</button>
+        </div>
+      </div>
+
+      <!-- 配偶與婚姻狀況 -->
+      <div class="spouse-card" id="spouse-card">
+        <div class="spouse-portrait" id="spouse-portrait" style="background-image: url('portraits/default.jpg');"></div>
+        <div class="spouse-info">
+          <div class="spouse-name" id="spouse-name">正室配偶：尚未婚配</div>
+          <div class="spouse-desc" id="spouse-desc">可與麾下親密度達到 80 以上的心儀名將結為連理，繁衍後代！</div>
+        </div>
+      </div>
+
+      <!-- 宗室子嗣列表 -->
+      <div class="children-list-container">
+        <h3 style="color: #ffd54f; font-size: 1.05rem; margin-bottom: 8px;">宗室子嗣與少主養育 (滿16歲及冠出仕)</h3>
+        <div class="children-grid" id="children-grid">
+          <!-- JS 動態生成子嗣卡片與導師指派 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 日式全螢幕過場與奧義/計略動畫 Overlay ==================== -->
+  <div class="cinematic-overlay hidden" id="cinematic-overlay">
+    <div class="cinematic-bg" id="cinematic-bg"></div>
+    <div class="cinematic-vignette"></div>
+    <div class="cinematic-particles-layer" id="cinematic-particles"></div>
+    <div class="cinematic-slash-slice" id="cinematic-slash-slice"></div>
+    
+    <!-- 武將立繪對角線切入 -->
+    <div class="cinematic-char-container" id="cinematic-char-container">
+      <div class="cinematic-portrait" id="cinematic-portrait"></div>
+      <div class="cinematic-char-name-badge" id="cinematic-char-name">諸葛亮</div>
+    </div>
+
+    <!-- 標題書法大字切入 -->
+    <div class="cinematic-title-box" id="cinematic-title-box">
+      <div class="cinematic-kanji-title" id="cinematic-title">【火 計 烈 焰】</div>
+      <div class="cinematic-kanji-sub" id="cinematic-sub">萬事俱備，只欠東風！烈火焚盡曹軍大寨！</div>
+    </div>
+
+    <!-- 底部點擊跳過提示 -->
+    <div class="cinematic-skip-hint">點擊任意處繼續 ▶</div>
+  </div>
+
+  <!-- ==================== 史詩劇本開場影片與時代序章 Overlay ==================== -->
+  <div class="modal-overlay hidden" id="scenario-intro-overlay" style="z-index: 9800;">
+    <div class="scenario-intro-modal" id="scenario-intro-box">
+      <div class="intro-bg-canvas" id="intro-bg-canvas"></div>
+      <div class="intro-vignette"></div>
+      <div class="intro-particles" id="intro-particles"></div>
+      
+      <!-- 頂部歷史年號與史詩詩篇 -->
+      <div class="intro-header-banner">
+        <div class="intro-poem-text" id="intro-poem-text">「蒼天已死，黃天當立；歲在甲子，天下大吉！」</div>
+        <div class="intro-main-title" id="intro-main-title">【甲 子 亂 起・蒼 天 傾 覆】</div>
+      </div>
+
+      <!-- 中間情節卡片與歷史畫卷 -->
+      <div class="intro-slide-card" id="intro-slide-card">
+        <div class="intro-slide-heading" id="intro-slide-heading">東漢末年・大廈將傾</div>
+        <div class="intro-slide-body" id="intro-slide-body">熹平年間，宦官專權，朝綱崩潰...</div>
+        <div class="intro-slide-sub" id="intro-slide-sub">鉅鹿人張角自稱「大賢良師」...</div>
+      </div>
+
+      <!-- 底部進度圓點與控制按鈕 -->
+      <div class="intro-controls-row">
+        <div class="intro-dots" id="intro-dots">
+          <span class="intro-dot active"></span>
+          <span class="intro-dot"></span>
+          <span class="intro-dot"></span>
+        </div>
+        <div class="intro-btns-group">
+          <button class="btn-intro-skip" id="btn-intro-skip">跳過序幕 ❯❯</button>
+          <button class="btn-intro-next" id="btn-intro-next">下 一 幕 ❯</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 遊戲核心 JS 腳本 -->
+  <!-- 注意：我們使用 script type="module" 來使用 ES6 import -->
+  <script type="module" src="game.js?v=2026081513"></script>
+</body>
+</html>
