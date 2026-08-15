@@ -1768,9 +1768,9 @@ function updateGlobalStats() {
   
   elFactionStatusArea.innerHTML = `
     <div class="faction-badge" style="background-image: url('${leaderPortrait}'); border-color: ${pFaction.color}; box-shadow: 0 0 10px ${pFaction.color};"></div>
-    <div class="stat-item">
-      <span class="stat-label">君主</span>
-      <span class="stat-value" style="color: ${pFaction.color};">${pFaction.leader}</span>
+    <div class="stat-item" style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1;">
+      <span class="stat-label" style="font-size: 0.65rem; color: #aaa;">君主</span>
+      <span class="stat-value" style="color: ${pFaction.color}; white-space: nowrap; font-size: 0.95rem; font-weight: bold;">${pFaction.leader}</span>
     </div>
   `;
   
