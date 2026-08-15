@@ -1390,7 +1390,70 @@ export const GENERALS = [
     appearanceYear: 207, 
     appearanceCity: 'wuling', 
     unitType: 'infantry' 
+  },
+
+  // ================= 🌀 異時空穿越名將與跨時代英傑 =================
+  { 
+    id: 'xiang_yu', 
+    name: '項羽', 
+    stats: { lead: 98, str: 100, int: 69, pol: 45, cha: 95 }, 
+    trait: 'flying_gen', 
+    portrait: 'portraits/default.jpg', 
+    portraitColor: '#b71c1c', 
+    description: '西楚霸王，羽之神勇千古無二。力拔山兮氣蓋世，烏江時空逆流穿越至三國！', 
+    appearanceYear: 184, 
+    appearanceCity: 'moling', 
+    unitType: 'cavalry' 
+  },
+  { 
+    id: 'huo_qubing', 
+    name: '霍去病', 
+    stats: { lead: 97, str: 96, int: 78, pol: 50, cha: 94 }, 
+    trait: 'flying_gen', 
+    portrait: 'portraits/default.jpg', 
+    portraitColor: '#c2185b', 
+    description: '大漢冠軍侯、大司馬驃騎將軍。封狼居胥，六擊匈奴，千里奔襲如入無人之境！', 
+    appearanceYear: 184, 
+    appearanceCity: 'shanyu_ting', 
+    unitType: 'cavalry' 
+  },
+  { 
+    id: 'bai_qi', 
+    name: '白起', 
+    stats: { lead: 100, str: 91, int: 95, pol: 60, cha: 70 }, 
+    trait: 'divine_calc', 
+    portrait: 'portraits/default.jpg', 
+    portraitColor: '#4a148c', 
+    description: '大秦武安君、戰國殺神。長平滅趙，一生料敵如神，百戰百勝！', 
+    appearanceYear: 184, 
+    appearanceCity: 'changan', 
+    unitType: 'infantry' 
+  },
+  { 
+    id: 'li_bai', 
+    name: '李白', 
+    stats: { lead: 60, str: 85, int: 96, pol: 72, cha: 100 }, 
+    trait: 'virtue', 
+    portrait: 'portraits/default.jpg', 
+    portraitColor: '#00838f', 
+    description: '盛唐詩仙青蓮居士。仗劍去國，辭親遠遊，十步殺一人，千里不留行！', 
+    appearanceYear: 184, 
+    appearanceCity: 'luoyang', 
+    unitType: 'cavalry' 
+  },
+  { 
+    id: 'chu_tianxing', 
+    name: '楚天行', 
+    stats: { lead: 82, str: 75, int: 99, pol: 95, cha: 88 }, 
+    trait: 'divine_calc', 
+    portrait: 'portraits/custom_lord_1.jpg', 
+    portraitColor: '#00695c', 
+    description: '現代穿越軍工歷史學家。攜帶高爐煉鋼、野戰外科與現代兵棋推演知識橫空降世！', 
+    appearanceYear: 184, 
+    appearanceCity: 'xuchang', 
+    unitType: 'archer' 
   }
+
 ];
 
 

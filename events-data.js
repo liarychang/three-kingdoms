@@ -909,6 +909,217 @@ export const HISTORICAL_EVENTS = [
         }
       ]
     }
+  },
+
+
+  // ================= 🌀 穿越時空 1：西楚霸王項羽降臨江東 =================
+  {
+    id: 'timetravel_xiang_yu',
+    name: '🌀 時空裂隙・西楚霸王項羽降世',
+    triggerYear: 185,
+    condition: (gameState) => true,
+    execute: (gameState, addLog, playSound) => {
+      addLog(`⚡【時空震盪】長江之畔驚現萬丈雷霆！千古第一勇士【西楚霸王・項羽】跨烏騅馬踏破時空降臨！`, 'highlight');
+      playSound('command_ok');
+    },
+    getPlayerTarget: (gameState) => true,
+    playerChoice: {
+      description: '烏江江面上雷雲翻滾，時空扭曲撕裂！只見一位身高八尺、目有重瞳的絕世戰神手持天龍破城戟，跨踏烏騅神駒自時空漩渦中踏出——正是西楚霸王【項羽】！',
+      options: [
+        {
+          text: '親率三軍以大禮相迎，拜為「天下兵馬大元帥」 (項羽加入麾下，武力 100，全軍士氣突破上限)',
+          onSelect: (gameState, addLog) => {
+            const xy = gameState.generals.find(g => g.id === 'xiang_yu');
+            if (xy) {
+              xy.faction = gameState.playerFactionId;
+              xy.loyalty = 100;
+              const cap = gameState.cities.find(c => c.faction === gameState.playerFactionId);
+              if (cap) xy.city = cap.id;
+            }
+            gameState.cities.filter(c => c.faction === gameState.playerFactionId).forEach(c => c.morale = 100);
+            addLog(`👑【霸王歸心】西楚霸王項羽感念主公盛情，誓以破城神戟為主公開疆拓土！`, 'highlight');
+          }
+        },
+        {
+          text: '請教霸王絕世武學《破釜沉舟戟法》 (麾下全體武將武力永久+5，解鎖霸王奧義)',
+          onSelect: (gameState, addLog) => {
+            gameState.generals.filter(g => g.faction === gameState.playerFactionId).forEach(g => {
+              g.stats.str = Math.min(100, g.stats.str + 5);
+            });
+            addLog(`🥋【霸王傳道】項羽傳授《破釜沉舟》殺伐奧義，麾下眾將武道極限突破！`, 'highlight');
+          }
+        }
+      ]
+    }
+  },
+
+  // ================= 🌀 穿越時空 2：大漢冠軍侯霍去病馳騁單于庭 =================
+  {
+    id: 'timetravel_huo_qubing',
+    name: '🌀 穿越名將・冠軍侯霍去病封狼居胥',
+    triggerYear: 187,
+    condition: (gameState) => true,
+    execute: (gameState, addLog, playSound) => {
+      addLog(`🐎【千古騎神】大漠深處驚現大漢冠軍侯【霍去病】八百驍騎！封狼居胥，威震塞外！`, 'highlight');
+      playSound('command_ok');
+    },
+    getPlayerTarget: (gameState) => true,
+    playerChoice: {
+      description: '北境大漠狼煙起，時空倒流！大漢傳奇名將【霍去病】率精銳驃騎穿越至漠北單于庭，一戰蕩平塞外蠻夷，名震八荒！',
+      options: [
+        {
+          text: '設宴封賞大將軍，招攬入朝 (冠軍侯霍去病加入，獲得 15000 精銳鐵騎)',
+          onSelect: (gameState, addLog) => {
+            const hqb = gameState.generals.find(g => g.id === 'huo_qubing');
+            if (hqb) {
+              hqb.faction = gameState.playerFactionId;
+              hqb.loyalty = 100;
+              const cap = gameState.cities.find(c => c.faction === gameState.playerFactionId);
+              if (cap) {
+                hqb.city = cap.id;
+                cap.troops += 15000;
+              }
+            }
+            addLog(`🏹【冠軍天威】霍去病橫刀立馬加入主公麾下！精銳鐵騎橫掃塞北！`, 'highlight');
+          }
+        }
+      ]
+    }
+  },
+
+  // ================= 🌀 穿越時空 3：大秦殺神武安君白起降臨 =================
+  {
+    id: 'timetravel_bai_qi',
+    name: '🌀 異時空殺神・大秦武安君白起現世',
+    triggerYear: 191,
+    condition: (gameState) => true,
+    execute: (gameState, addLog, playSound) => {
+      addLog(`⚔️【煞氣沖霄】函谷關外秦磚漢瓦共鳴，戰國四大名將之首【白起】降臨人間！`, 'highlight');
+      playSound('command_ok');
+    },
+    getPlayerTarget: (gameState) => true,
+    playerChoice: {
+      description: '函谷關前煞氣遮天蔽日，大秦軍神【白起】身披黑玄戰甲自上古戰場穿越而來，觀天下大勢，欲助明主重鑄華夏一統！',
+      options: [
+        {
+          text: '尊奉為軍師上將軍 (白起加入，統率 100，全領地防禦+150)',
+          onSelect: (gameState, addLog) => {
+            const bq = gameState.generals.find(g => g.id === 'bai_qi');
+            if (bq) {
+              bq.faction = gameState.playerFactionId;
+              bq.loyalty = 100;
+              const cap = gameState.cities.find(c => c.faction === gameState.playerFactionId);
+              if (cap) bq.city = cap.id;
+            }
+            gameState.cities.filter(c => c.faction === gameState.playerFactionId).forEach(c => {
+              c.defense = Math.min(c.maxDefense, c.defense + 150);
+            });
+            addLog(`🛡️【武安鎮國】殺神白起掌三軍虎符！軍令如山，天下諸侯聞風喪膽！`, 'highlight');
+          }
+        }
+      ]
+    }
+  },
+
+  // ================= 🌀 穿越時空 4：現代科技穿越者獻策・高爐百煉鋼 =================
+  {
+    id: 'timetravel_modern_tech',
+    name: '🌀 現代科技穿越・高爐百煉鋼與軍工革命',
+    triggerYear: 193,
+    condition: (gameState) => true,
+    execute: (gameState, addLog, playSound) => {
+      addLog(`⚙️【天工開物】穿越工程學者【楚天行】現身許昌，獻上現代高爐煉鋼與流水線製造圖紙！`, 'highlight');
+      playSound('command_ok');
+    },
+    getPlayerTarget: (gameState) => true,
+    playerChoice: {
+      description: '一位自稱來自二十一世紀的穿越工程學家【楚天行】覲見主公，呈遞《現代高爐百煉鋼技術》與《步砲協同陣法》，能使全軍兵刃防具發生質的飛躍！',
+      options: [
+        {
+          text: '全力推行現代軍工改革 (楚天行加入，國庫增產黃金 10000，全領地城防與裝備大幅升級)',
+          onSelect: (gameState, addLog) => {
+            const ctx = gameState.generals.find(g => g.id === 'chu_tianxing');
+            if (ctx) {
+              ctx.faction = gameState.playerFactionId;
+              ctx.loyalty = 100;
+              const cap = gameState.cities.find(c => c.faction === gameState.playerFactionId);
+              if (cap) ctx.city = cap.id;
+            }
+            gameState.cities.filter(c => c.faction === gameState.playerFactionId).forEach(c => {
+              c.gold += 5000;
+              c.commerce += 100;
+              c.defense = Math.min(c.maxDefense, c.defense + 100);
+            });
+            addLog(`🔥【工業革命】三國首座現代高爐落成！百煉鋼神兵全面裝備全軍！`, 'highlight');
+          }
+        }
+      ]
+    }
+  },
+
+  // ================= 🌀 穿越時空 5：青蓮居士李白詩酒論道 =================
+  {
+    id: 'timetravel_li_bai',
+    name: '🌀 詩劍雙絕・詩仙李白醉遊三國',
+    triggerYear: 196,
+    condition: (gameState) => true,
+    execute: (gameState, addLog, playSound) => {
+      addLog(`🍷【詩仙降臨】盛唐詩仙【李白】踏歌而來！「大鵬一日同風起，扶搖直上九萬里！」`, 'highlight');
+      playSound('command_ok');
+    },
+    getPlayerTarget: (gameState) => true,
+    playerChoice: {
+      description: '洛陽名樓之上，青蓮劍仙【李白】一襲白袍醉臥樓頭，揮毫潑墨寫下千古名篇《俠客行》，引得四方賢士慕名景從！',
+      options: [
+        {
+          text: '備美酒百罈，邀詩仙同謀天下 (李白加入，主公魅力+10，全勢力將領忠誠度滿值)',
+          onSelect: (gameState, addLog) => {
+            const lb = gameState.generals.find(g => g.id === 'li_bai');
+            if (lb) {
+              lb.faction = gameState.playerFactionId;
+              lb.loyalty = 100;
+              const cap = gameState.cities.find(c => c.faction === gameState.playerFactionId);
+              if (cap) lb.city = cap.id;
+            }
+            gameState.generals.filter(g => g.faction === gameState.playerFactionId).forEach(g => {
+              g.loyalty = 100;
+              g.stats.cha = Math.min(100, g.stats.cha + 5);
+            });
+            addLog(`✨【名流千古】詩仙李白賦詩讚頌主公！天下名士紛紛前來投奔！`, 'highlight');
+          }
+        }
+      ]
+    }
+  },
+
+  // ================= 🌀 穿越時空 6：挖掘出未來史書《三國志演義》黑匣 =================
+  {
+    id: 'timetravel_future_chronicle',
+    name: '🌀 未來預知・天降未來史書黑匣',
+    triggerYear: 201,
+    condition: (gameState) => true,
+    execute: (gameState, addLog, playSound) => {
+      addLog(`📱【天降天機】工匠於後山掘出神秘發光黑匣，內藏千年後之未來史書《三國志》與全圖情報！`, 'highlight');
+      playSound('command_ok');
+    },
+    getPlayerTarget: (gameState) => true,
+    playerChoice: {
+      description: '工匠在興建宮殿時，意外挖出一只刻有奇異電路與太陽能板的未來發光黑匣！屏幕亮起，赫然顯示著三國全歷史發展軌跡與各路諸侯暗藏之虛實弱點！',
+      options: [
+        {
+          text: '研讀未來史書，洞悉天下先機 (全體將領智力+8，國庫獲贈 15000 黃金)',
+          onSelect: (gameState, addLog) => {
+            gameState.generals.filter(g => g.faction === gameState.playerFactionId).forEach(g => {
+              g.stats.int = Math.min(100, g.stats.int + 8);
+            });
+            gameState.cities.filter(c => c.faction === gameState.playerFactionId).forEach(c => {
+              c.gold += 3000;
+            });
+            addLog(`🔮【洞悉乾坤】知曉未來者得天下！主公看破各路諸侯計謀，智略無雙！`, 'highlight');
+          }
+        }
+      ]
+    }
   }
 
 ];
