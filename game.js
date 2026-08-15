@@ -1321,6 +1321,95 @@ function startHotseatMode() {
   startGame();
 }
 
+
+// ==================== 👑 己方領地快速導航與快速鍵 ====================
+function updateMyCitiesQuickNav() {
+  const container = document.getElementById('nav-cities-scroll');
+  if (!container) return;
+
+  const myCities = gameState.cities.filter(c => c.faction === gameState.playerFactionId);
+  container.innerHTML = '';
+
+  myCities.forEach(city => {
+    const isSelected = gameState.selectedCity && gameState.selectedCity.id === city.id;
+    const pill = document.createElement('button');
+    pill.className = `nav-city-pill ${isSelected ? 'active' : ''}`;
+    pill.innerHTML = `<span>🏰 ${city.name}</span><span style="font-size:0.7rem; opacity:0.85;">(${Math.floor(city.troops/1000)}k兵)</span>`;
+    
+    pill.addEventListener('click', () => {
+      playSound('select');
+      selectCity(city);
+    });
+
+    container.appendChild(pill);
+  });
+}
+
+function cycleMyCity(direction = 1) {
+  const myCities = gameState.cities.filter(c => c.faction === gameState.playerFactionId);
+  if (myCities.length === 0) return;
+
+  let currentIndex = myCities.findIndex(c => gameState.selectedCity && gameState.selectedCity.id === c.id);
+  if (currentIndex === -1) currentIndex = 0;
+  else currentIndex = (currentIndex + direction + myCities.length) % myCities.length;
+
+  selectCity(myCities[currentIndex]);
+  playSound('select');
+}
+
+function initKeyboardShortcuts() {
+  window.addEventListener('keydown', (e) => {
+    // 若在輸入框中則不觸發快速鍵
+    if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+
+    if (e.key === ' ' || (e.key === 'Enter' && e.ctrlKey)) {
+      // Space / Ctrl+Enter: 結束本月
+      e.preventDefault();
+      document.getElementById('end-turn-btn')?.click();
+    } else if (e.key === '[' || e.key === 'Tab') {
+      // Tab / [: 上一座城
+      e.preventDefault();
+      cycleMyCity(-1);
+    } else if (e.key === ']') {
+      // ]: 下一座城
+      e.preventDefault();
+      cycleMyCity(1);
+    } else if (e.key === 'a' || e.key === 'A') {
+      // A: 出征
+      triggerCommand('attack');
+    } else if (e.key === 'r' || e.key === 'R') {
+      // R: 徵兵
+      triggerCommand('conscript');
+    } else if (e.key === 'd' || e.key === 'D') {
+      // D: 開發
+      triggerCommand('develop_agri');
+    } else if (e.key === 's' || e.key === 'S') {
+      // S: 探索
+      triggerCommand('search');
+    } else if (e.key === 'Escape') {
+      // Esc: 取消目標選擇或關閉彈窗
+      if (gameState.isSelectingTarget) {
+        cancelTargetSelection();
+      } else {
+        document.querySelectorAll('.modal-overlay').forEach(m => m.classList.add('hidden'));
+      }
+    }
+  });
+
+  // 綁定快速導航切換按鈕
+  document.getElementById('nav-prev-city-btn')?.addEventListener('click', () => cycleMyCity(-1));
+  document.getElementById('nav-next-city-btn')?.addEventListener('click', () => cycleMyCity(1));
+  document.getElementById('target-hint-cancel-btn')?.addEventListener('click', () => cancelTargetSelection());
+}
+
+function cancelTargetSelection() {
+  gameState.isSelectingTarget = false;
+  gameState.pendingDispatch = null;
+  document.getElementById('target-hint-banner')?.classList.add('hidden');
+  renderMap();
+  addLog('已取消目標選擇。', 'system');
+}
+
 function initGameApp() {
   gameState.cities = JSON.parse(JSON.stringify(CITIES));
   gameState.generals = JSON.parse(JSON.stringify(GENERALS)).map(g => {
@@ -1332,6 +1421,7 @@ function initGameApp() {
   initStartMenu();
   bindEvents();
   initMultiplayer();
+  initKeyboardShortcuts();
   
   // 開始播放地圖音樂
   document.body.addEventListener('click', () => {
@@ -1736,6 +1826,7 @@ function startGame() {
   if (playerCapital) {
     selectCity(playerCapital);
   }
+  updateMyCitiesQuickNav();
 
   addLog(`⚔️ 歷史的序幕拉開！西元 ${gameState.year} 年，您選擇扮演【${playerFaction.leader}】勢力，開始逐鹿中原之旅。`, 'system');
   addLog(`💡 溫馨提示：不同君主具有獨特天賦，且武將兵種之間存在相剋關係（騎剋步、步剋弓、弓剋騎）。`, 'system');
@@ -1863,15 +1954,50 @@ function renderMap() {
     g.className.baseVal = 'city-group';
     g.id = `city-node-${city.id}`;
     
+    const isMyCity = city.faction === gameState.playerFactionId;
+    const isTargetMode = gameState.isSelectingTarget && gameState.pendingDispatch;
+    let isValidTarget = false;
+
+    if (isTargetMode) {
+      const orig = gameState.pendingDispatch.origin;
+      const cmd = gameState.pendingDispatch.cmd;
+      if (isAdjacent(orig.id, city.id)) {
+        if (cmd === 'move' && isMyCity) isValidTarget = true;
+        else if (cmd === 'attack' && !isMyCity) isValidTarget = true;
+        else if (['rumor', 'sabotage', 'alienate'].includes(cmd) && !isMyCity) isValidTarget = true;
+      }
+    }
+
     const halo = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     halo.setAttribute('cx', city.x);
     halo.setAttribute('cy', city.y);
-    halo.setAttribute('r', 28);
-    halo.className.baseVal = 'city-halo';
-    halo.style.color = faction.color;
-    halo.style.fill = faction.color;
-    halo.style.opacity = '0.3';
+    halo.setAttribute('r', isMyCity ? 32 : 28);
+    
+    if (isValidTarget) {
+      halo.className.baseVal = 'city-halo valid-target-halo';
+      g.classList.add('valid-target-node');
+    } else if (isMyCity) {
+      halo.className.baseVal = 'city-halo player-city-halo';
+      halo.style.color = '#ffd700';
+      halo.style.fill = 'rgba(255, 215, 0, 0.25)';
+    } else {
+      halo.className.baseVal = 'city-halo';
+      halo.style.color = faction.color;
+      halo.style.fill = faction.color;
+      halo.style.opacity = '0.25';
+    }
     g.appendChild(halo);
+
+    // 我方領地醒目金色龍冠圖標
+    if (isMyCity) {
+      const crown = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      crown.setAttribute('x', city.x);
+      crown.setAttribute('y', city.y - 40);
+      crown.setAttribute('font-size', '14px');
+      crown.setAttribute('text-anchor', 'middle');
+      crown.textContent = '👑';
+      g.appendChild(crown);
+    }
     
     // 擬真城池圖示 (3D Castle)
     const cityIcon = document.createElementNS('http://www.w3.org/2000/svg', 'image');
@@ -1993,6 +2119,7 @@ function selectCity(city) {
   if (elCity) elCity.classList.add('selected');
   
   updateRightPanel(city);
+  updateMyCitiesQuickNav();
   
   if (city.faction === gameState.playerFactionId) {
     elCommandBar.style.display = 'flex';

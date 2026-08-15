@@ -91,7 +91,25 @@
     </section>
 
     <!-- 中間面板：地圖 SVG -->
-    <section class="map-panel glass-panel">
+        <section class="map-panel glass-panel">
+      <!-- 👑 己方領地快速導航列 -->
+      <div class="my-cities-nav-bar" id="my-cities-nav-bar">
+        <div class="nav-bar-title">👑 我方領地:</div>
+        <div class="nav-cities-scroll" id="nav-cities-scroll">
+          <!-- JS 動態生成城池膠囊按鈕 -->
+        </div>
+        <div class="nav-arrow-btns">
+          <button class="nav-arrow-btn" id="nav-prev-city-btn" title="切換上一座城池 (快速鍵: [)">◀</button>
+          <button class="nav-arrow-btn" id="nav-next-city-btn" title="切換下一座城池 (快速鍵: ])">▶</button>
+        </div>
+      </div>
+
+      <!-- 🎯 出征/行軍/計略目標選取指引橫幅 -->
+      <div class="target-hint-banner hidden" id="target-hint-banner">
+        <span id="target-hint-text">🎯 請直接點擊地圖上【發光的相鄰城池】執行出征！</span>
+        <button class="target-hint-cancel" id="target-hint-cancel-btn">✖ 取消</button>
+      </div>
+
       <svg class="map-svg" viewBox="0 0 1000 700" id="game-map">
         <!-- 背景與紋理 (由JS動態生成，或靜態SVG元素) -->
         <defs>
