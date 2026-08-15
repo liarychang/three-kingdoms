@@ -351,6 +351,41 @@
           </div>
         </div>
 
+        <!-- 獨立指令中樞區 (選中己方城池時展開，絕不遮擋地圖) -->
+        <div class="city-command-deck" id="city-command-deck">
+          <div class="deck-category">
+            <span class="deck-category-title">🏛️ 內政發展</span>
+            <div class="deck-btn-grid">
+              <button class="btn-cmd" id="cmd-develop-agri" onclick="triggerCommand('develop_agri')">🌾 開發</button>
+              <button class="btn-cmd" id="cmd-develop-comm" onclick="triggerCommand('develop_comm')">💰 商業</button>
+              <button class="btn-cmd" id="cmd-trade" onclick="triggerCommand('trade')">⚖️ 交易</button>
+              <button class="btn-cmd" id="cmd-fortify" onclick="triggerCommand('fortify')">🛡️ 修築</button>
+              <button class="btn-cmd" id="cmd-tech" onclick="triggerCommand('tech')" style="border-color: #ffd54f; color: #ffe082;">🔬 科技</button>
+            </div>
+          </div>
+
+          <div class="deck-category">
+            <span class="deck-category-title">⚔️ 軍事征伐</span>
+            <div class="deck-btn-grid">
+              <button class="btn-cmd" id="cmd-conscript" onclick="triggerCommand('conscript')">🛡️ 徵兵</button>
+              <button class="btn-cmd" id="cmd-train" onclick="triggerCommand('train')">🥋 訓練</button>
+              <button class="btn-cmd" id="cmd-move" onclick="triggerCommand('move')">🐎 移動</button>
+              <button class="btn-cmd btn-cmd-attack" id="cmd-attack" onclick="triggerCommand('attack')">⚔️ 出征</button>
+            </div>
+          </div>
+
+          <div class="deck-category">
+            <span class="deck-category-title">🧑‍💼 人才與外交</span>
+            <div class="deck-btn-grid">
+              <button class="btn-cmd" id="cmd-search" onclick="triggerCommand('search')">🔍 探索</button>
+              <button class="btn-cmd" id="cmd-recruit" onclick="triggerCommand('recruit')">📜 登用</button>
+              <button class="btn-cmd" id="cmd-reward" onclick="triggerCommand('reward')">🎁 賞賜</button>
+              <button class="btn-cmd" id="cmd-rumor" onclick="triggerCommand('rumor')">🗣️ 計略</button>
+              <button class="btn-cmd" id="cmd-goodwill" onclick="triggerCommand('goodwill')">🤝 外交</button>
+            </div>
+          </div>
+        </div>
+
         <div class="generals-section">
           <div class="section-title">
             <span>駐軍武將</span>
@@ -363,68 +398,19 @@
       </div>
     </section>
 
-    <!-- 浮動指令控制列 (底欄) -->
-    <footer class="command-panel glass-panel" id="command-bar" style="display: none;">
-      <div class="command-groups">
-        <!-- 內政組 -->
-        <div class="command-group">
-          <span class="command-group-label">內政</span>
-          <div class="buttons-row">
-            <button class="btn-cmd" id="cmd-develop-agri" onclick="triggerCommand('develop_agri')">開發</button>
-            <button class="btn-cmd" id="cmd-develop-comm" onclick="triggerCommand('develop_comm')">商業</button>
-            <button class="btn-cmd" id="cmd-trade" onclick="triggerCommand('trade')">交易</button>
-            <button class="btn-cmd" id="cmd-fortify" onclick="triggerCommand('fortify')">修築</button>
-            <button class="btn-cmd" id="cmd-tech" onclick="triggerCommand('tech')" style="border-color: #ffd54f; color: #ffe082;">科技</button>
-          </div>
+    <!-- 獨立懸浮【下個月】傳國玉璽推進按鈕 (永不遮擋地圖) -->
+    <div class="floating-end-turn-container" id="floating-end-turn-container">
+      <button class="btn-imperial-end-turn" id="end-turn-btn" onclick="triggerEndTurn()" title="推進至下個月 (快速鍵: 空白鍵 Space)">
+        <span class="imperial-icon">👑</span>
+        <div class="imperial-text-group">
+          <span class="imperial-main">下 個 月</span>
+          <span class="imperial-sub">Space 空白鍵</span>
         </div>
-        
-        <!-- 軍事組 -->
-        <div class="command-group">
-          <span class="command-group-label">軍事</span>
-          <div class="buttons-row">
-            <button class="btn-cmd" id="cmd-conscript" onclick="triggerCommand('conscript')">徵兵</button>
-            <button class="btn-cmd" id="cmd-train" onclick="triggerCommand('train')">訓練</button>
-            <button class="btn-cmd" id="cmd-move" onclick="triggerCommand('move')">移動</button>
-            <button class="btn-cmd" id="cmd-attack" onclick="triggerCommand('attack')" style="border-color: #ff3d00; color: #ff8a65;">出征</button>
-          </div>
-        </div>
+      </button>
+    </div>
 
-        <!-- 人才組 -->
-        <div class="command-group">
-          <span class="command-group-label">人才</span>
-          <div class="buttons-row">
-            <button class="btn-cmd" id="cmd-search" onclick="triggerCommand('search')">探索</button>
-            <button class="btn-cmd" id="cmd-recruit" onclick="triggerCommand('recruit')">登用</button>
-            <button class="btn-cmd" id="cmd-reward" onclick="triggerCommand('reward')">賞賜</button>
-          </div>
-        </div>
-
-        <!-- 計略 -->
-        <div class="command-group">
-          <span class="command-group-label" style="color: #ba68c8;">計略</span>
-          <div class="buttons-row">
-            <button class="btn-cmd" id="cmd-rumor" onclick="triggerCommand('rumor')">流言</button>
-            <button class="btn-cmd" id="cmd-sabotage" onclick="triggerCommand('sabotage')">破壞</button>
-            <button class="btn-cmd" id="cmd-alienate" onclick="triggerCommand('alienate')">離間</button>
-          </div>
-        </div>
-
-        <!-- 外交組 -->
-        <div class="command-group" id="group-diplomacy" style="display: none;">
-          <span class="command-group-label" style="color: #4dd0e1;">外交</span>
-          <div class="buttons-row">
-            <button class="btn-cmd" id="cmd-goodwill" onclick="triggerCommand('goodwill')" style="border-color: #4dd0e1; color: #b2ebf2;">親善</button>
-            <button class="btn-cmd" id="cmd-alliance" onclick="triggerCommand('alliance')" style="border-color: #4dd0e1; color: #b2ebf2;">結盟</button>
-            <button class="btn-cmd" id="cmd-break-alliance" onclick="triggerCommand('break_alliance')" style="border-color: #ff5252; color: #ff8a80;">破棄</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 回合結束按鈕 -->
-      <div>
-        <button class="btn-end-turn" id="end-turn-btn">下 個 月</button>
-      </div>
-    </footer>
+    <!-- 隱藏舊版 command-bar 容器以保持代碼兼容 -->
+    <footer class="command-panel" id="command-bar" style="display: none !important;"></footer>
   </main>
 
   <!-- ==================== 彈出視窗與模態框 ==================== -->

@@ -2229,19 +2229,24 @@ function selectCity(city) {
   updateRightPanel(city);
   updateMyCitiesQuickNav();
   
+  const deck = document.getElementById('city-command-deck');
   if (city.faction === gameState.playerFactionId) {
-    elCommandBar.style.display = 'flex';
+    if (deck) deck.style.display = 'flex';
+    if (elCommandBar) elCommandBar.style.display = 'none';
     const cityGens = gameState.generals.filter(g => g.city === city.id && g.faction === gameState.playerFactionId && !g.acted);
     updateCommandButtons(cityGens.length > 0);
   } else {
-    elCommandBar.style.display = 'none';
+    if (deck) deck.style.display = 'none';
+    if (elCommandBar) elCommandBar.style.display = 'none';
   }
 }
 
 function deselectCity() {
   gameState.selectedCity = null;
   document.querySelectorAll('.city-group').forEach(el => el.classList.remove('selected'));
-  elCommandBar.style.display = 'none';
+  const deck = document.getElementById('city-command-deck');
+  if (deck) deck.style.display = 'none';
+  if (elCommandBar) elCommandBar.style.display = 'none';
   
   elDetailCityName.textContent = '請選擇城市';
   elDetailCityFaction.textContent = '未選擇';
