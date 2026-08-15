@@ -421,6 +421,18 @@
       <h1>三國志：逐鹿中原</h1>
       <p class="subtitle">東漢末年，群雄割據。請選擇劇本與勢力，完成天下一統的大業！</p>
       
+      <!-- ⚡ 偵測到上次戰局：一鍵繼續進度橫幅 (防止誤刷新丟失進度) -->
+      <div class="resume-session-banner hidden" id="resume-session-banner">
+        <div class="resume-session-info">
+          <span class="resume-icon">⚡</span>
+          <div>
+            <div class="resume-title" id="resume-session-title">發現進行中的戰局</div>
+            <div class="resume-sub" id="resume-session-sub">西元 184 年 1 月・曹操勢力</div>
+          </div>
+        </div>
+        <button class="btn-resume-session" id="btn-resume-session">⚡ 繼續戰局</button>
+      </div>
+
       <!-- 劇本選擇區 -->
       <div id="scenario-selection-area">
         <h3 style="color: var(--color-gold); margin-bottom: 10px; border-bottom: 1px solid rgba(255,215,0,0.3); padding-bottom: 5px;">第一步：選擇劇本</h3>
@@ -1414,6 +1426,6 @@
 
   <!-- 遊戲核心 JS 腳本 -->
   <!-- 注意：我們使用 script type="module" 來使用 ES6 import -->
-  <script type="module" src="game.js?v=202608152018"></script>
+  <script type="module" src="game.js?v=202608152040"></script>
 </body>
 </html>

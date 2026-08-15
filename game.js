@@ -21,6 +21,9 @@ const TRAIT_INFO = {
   wealthy: { name: '富豪', desc: '擔任太守時，該城季收黃金與糧草增加 30%。' },
   beauty: { name: '傾國', desc: '離間計與登庸成功率對男性武將大幅提升。' }
 };
+const AUTOSAVE_KEY = 'three_kingdoms_autosave';
+const SAVE_KEY = 'three_kingdoms_save';
+
 // ==================== 遊戲狀態 ====================
 let gameState = {
   scenarioId: null,
@@ -61,6 +64,7 @@ let gameState = {
   unlockedAchievements: [],
   duelWins: 0
 };
+window.gameState = gameState;
 
 // ==================== 網頁元素綁定 ====================
 const elMap = document.getElementById('game-map');
@@ -1723,6 +1727,7 @@ function bindEvents() {
 
 // ==================== 開局選單 (劇本與勢力選擇) ====================
 function initStartMenu() {
+  checkAndShowResumeBanner();
   const elScenarioArea = document.getElementById('scenario-selection-area');
   const elFactionArea = document.getElementById('faction-selection-area');
   const elScenarioContainer = document.getElementById('scenario-select-container');
@@ -1752,9 +1757,18 @@ function initStartMenu() {
     elScenarioContainer.appendChild(card);
   });
 
+  // 預設選中第一個劇本
+  if (elScenarioContainer.firstElementChild) {
+    elScenarioContainer.firstElementChild.classList.add('selected');
+    selectedScenarioData = SCENARIOS[0];
+    elConfirmScenarioBtn.disabled = false;
+    elScenarioPreview.textContent = SCENARIOS[0].description;
+  }
+
   // 2. 確認劇本，切換至選擇勢力
   elConfirmScenarioBtn.addEventListener('click', () => {
     playSound('command_ok');
+    if (!selectedScenarioData) selectedScenarioData = SCENARIOS[0];
     gameState.selectedScenario = selectedScenarioData;
     gameState.scenarioId = selectedScenarioData.id;
     gameState.year = selectedScenarioData.year;
@@ -1861,6 +1875,14 @@ function renderFactionSelect(scenario) {
 
     elFactionSelectContainer.appendChild(card);
   });
+
+  // 預設選中第一個勢力
+  if (elFactionSelectContainer.firstElementChild && scenario.activeFactions.length > 0) {
+    elFactionSelectContainer.firstElementChild.classList.add('selected');
+    gameState.playerFactionId = scenario.activeFactions[0];
+    elStartGameBtn.disabled = false;
+    document.getElementById('faction-preview-text').innerHTML = getFactionDesc(scenario.activeFactions[0]);
+  }
 }
 
 function getFactionDesc(id) {
@@ -1879,7 +1901,9 @@ function startGame() {
   const scenario = gameState.selectedScenario || SCENARIOS.find(s => s.id === gameState.scenarioId) || SCENARIOS[0];
   gameState.scenarioId = scenario.id;
   gameState.year = scenario.year;
-  gameState.month = scenario.month;
+  if (!gameState.playerFactionId) {
+    gameState.playerFactionId = (scenario.activeFactions && scenario.activeFactions[0]) || 'cao_cao';
+  }
 
   // 如果不是自創君主，則依劇本嚴謹初始化城池與武將配置
   if (gameState.playerFactionId !== 'custom_faction') {
@@ -1928,6 +1952,7 @@ function startGame() {
 
   updateGlobalStats();
   renderMap();
+  autoSaveGame();
   
   // 自動選中玩家的首座城池
   const playerCapital = gameState.cities.find(c => c.faction === gameState.playerFactionId) || gameState.cities[0];
@@ -2378,10 +2403,12 @@ function updateCommandButtons(hasActiveGens) {
   });
   
   const diplomacyGroup = document.getElementById('group-diplomacy');
-  if (gameState.selectedCity && gameState.selectedCity.faction === gameState.playerFactionId) {
-    diplomacyGroup.style.display = 'block';
-  } else {
-    diplomacyGroup.style.display = 'none';
+  if (diplomacyGroup) {
+    if (gameState.selectedCity && gameState.selectedCity.faction === gameState.playerFactionId) {
+      diplomacyGroup.style.display = 'block';
+    } else {
+      diplomacyGroup.style.display = 'none';
+    }
   }
 }
 
@@ -3788,6 +3815,7 @@ function processEndTurn() {
   } else {
     deselectCity();
   }
+  autoSaveGame();
 }
 
 function simulateAITurns() {
@@ -3891,7 +3919,185 @@ function addLog(message, type = 'neutral') {
 }
 
 // ==================== 存檔 / 讀檔系統 ====================
-const SAVE_KEY = 'three_kingdoms_save';
+
+
+// ==================== 智慧即時自動存檔 (Auto-Save Engine) ====================
+function autoSaveGame() {
+  if (!gameState.year || !gameState.playerFactionId) return;
+  try {
+    const saveData = {
+      version: 3,
+      timestamp: new Date().toISOString(),
+      year: gameState.year,
+      month: gameState.month,
+      playerFactionId: gameState.playerFactionId,
+      cities: gameState.cities,
+      generals: gameState.generals.map(g => ({
+        id: g.id,
+        name: g.name,
+        faction: g.faction,
+        city: g.city,
+        stats: g.stats,
+        portrait: g.portrait,
+        portraitColor: g.portraitColor,
+        description: g.description,
+        loyalty: g.loyalty,
+        items: g.items || [],
+        acted: g.acted || false,
+        level: g.level || 1,
+        exp: g.exp || 0,
+        freeStats: g.freeStats || 0
+      })),
+      factionItems: gameState.factionItems || [],
+      researchedTechs: gameState.researchedTechs || [],
+      techBonuses: gameState.techBonuses || {},
+      children: gameState.children || [],
+      spouse: gameState.spouse || null,
+      relations: gameState.relations || {},
+      alliances: gameState.alliances || {}
+    };
+    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(saveData));
+  } catch(e) {
+    /* ignore storage quota error */
+  }
+}
+
+// 監聽網頁防誤觸重整與離開 (beforeunload)
+window.addEventListener('beforeunload', (e) => {
+  const overlay = document.getElementById('start-overlay');
+  const isGameRunning = overlay && overlay.classList.contains('hidden') && gameState.playerFactionId;
+  if (isGameRunning) {
+    autoSaveGame();
+    e.preventDefault();
+    e.returnValue = '您目前有進行中的三國霸業戰局，確定要重新整理或離開嗎？';
+    return e.returnValue;
+  }
+});
+
+// 監聽手機切換背景或鎖定螢幕 (visibilitychange)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    autoSaveGame();
+  }
+});
+
+window.checkAndShowResumeBanner = checkAndShowResumeBanner;
+window.applyLoadedSaveData = applyLoadedSaveData;
+
+function checkAndShowResumeBanner() {
+  const banner = document.getElementById('resume-session-banner');
+  const title = document.getElementById('resume-session-title');
+  const sub = document.getElementById('resume-session-sub');
+  const btn = document.getElementById('btn-resume-session');
+  if (!banner || !btn) return;
+
+  const rawAuto = localStorage.getItem(AUTOSAVE_KEY) || localStorage.getItem(SAVE_KEY);
+  if (!rawAuto) {
+    banner.classList.add('hidden');
+    return;
+  }
+
+  try {
+    const saveData = JSON.parse(rawAuto);
+    if (!saveData.year || !saveData.playerFactionId) {
+      banner.classList.add('hidden');
+      return;
+    }
+
+    const f = FACTIONS[saveData.playerFactionId];
+    const leaderGen = (saveData.generals || []).find(g => g.id === saveData.playerFactionId || (f && g.id === f.id));
+    const leaderName = (f && f.leader) || (leaderGen && leaderGen.name) || '主公';
+    const factionName = (f && f.name) || (leaderGen ? `${leaderGen.name}軍` : '勢力');
+    const myCitiesCount = (saveData.cities || []).filter(c => c.faction === saveData.playerFactionId).length;
+
+    title.textContent = `⚡ 發現上次未完戰局【${leaderName}・${factionName}】`;
+    sub.textContent = `西元 ${saveData.year} 年 ${saveData.month} 月 | 控制城池 ${myCitiesCount} 座 | 點擊一鍵直接重返戰場！`;
+    banner.classList.remove('hidden');
+
+    if (!btn._bound) {
+      btn._bound = true;
+      btn.addEventListener('click', () => {
+        playSound('command_ok');
+        applyLoadedSaveData(saveData);
+      });
+    }
+  } catch(e) {
+    banner.classList.add('hidden');
+  }
+}
+
+function applyLoadedSaveData(saveData) {
+  gameState.year = Number(saveData.year) || 184;
+  gameState.month = Number(saveData.month) || 1;
+  gameState.playerFactionId = saveData.playerFactionId || 'cao_cao';
+  
+  // 健全自動修復所有城池數值（清除舊存檔可能遺留之 NaN 與 undefined）
+  gameState.cities = (saveData.cities || []).map(c => ({
+    ...c,
+    gold: (!isNaN(Number(c.gold)) && Number(c.gold) >= 0) ? Number(c.gold) : 3000,
+    food: (!isNaN(Number(c.food)) && Number(c.food) >= 0) ? Number(c.food) : 12000,
+    troops: (!isNaN(Number(c.troops)) && Number(c.troops) >= 0) ? Number(c.troops) : 10000,
+    morale: Number(c.morale) || 85,
+    defense: Number(c.defense) || 600,
+    maxDefense: Number(c.maxDefense) || 1000,
+    agriculture: Number(c.agriculture) || 250,
+    commerce: Number(c.commerce) || 250
+  }));
+
+  if (gameState.cities.length === 0) {
+    gameState.cities = CITIES.map(c => ({ ...c, gold: 3000, food: 12000, troops: 10000, morale: 85 }));
+  }
+
+  gameState.generals = (saveData.generals || []).map(g => {
+    if (g.loyalty === undefined) g.loyalty = g.faction === 'neutral' ? 50 : 100;
+    if (!g.items) g.items = [];
+    return g;
+  });
+
+  gameState.researchedTechs = saveData.researchedTechs || [];
+  gameState.techBonuses = saveData.techBonuses || {
+    attackBonus: 0,
+    defenseBonus: 0,
+    infantryDefense: 0,
+    cavalryDamage: 0,
+    siegeDamage: 0,
+    maxMorale: 100
+  };
+  gameState.factionItems = saveData.factionItems || [];
+  gameState.children = saveData.children || [];
+  gameState.spouse = saveData.spouse || null;
+  gameState.relations = saveData.relations || {};
+  gameState.alliances = saveData.alliances || {};
+  gameState.selectedCity = null;
+  
+  document.getElementById('start-overlay')?.classList.add('hidden');
+  
+  if (gameState.playerFactionId === 'custom_faction' && !FACTIONS['custom_faction']) {
+    const customGen = gameState.generals.find(g => g.id === 'custom_faction' || g.id === 'custom_lord');
+    FACTIONS['custom_faction'] = {
+      id: 'custom_faction',
+      name: customGen ? customGen.name : '自創雄主',
+      color: customGen ? customGen.portraitColor : '#c62828',
+      secondaryColor: 'rgba(229, 57, 53, 0.2)',
+      banner: customGen ? customGen.name.charAt(0) : '主',
+      leader: customGen ? customGen.name : '自創雄主',
+      trait: 'god_of_war'
+    };
+  }
+
+  const playerCapital = gameState.cities.find(c => c.faction === gameState.playerFactionId) || gameState.cities[0];
+  if (playerCapital) {
+    selectCity(playerCapital);
+  }
+  
+  updateGlobalStats();
+  renderMap();
+  updateMyCitiesQuickNav();
+  
+  playSound('command_ok');
+  addLog(`⚡【戰局恢復】已自動銜接上次進行中的進度！西元 ${gameState.year} 年 ${gameState.month} 月`, 'highlight');
+}
+
 
 function saveGame() {
   try {
