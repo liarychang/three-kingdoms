@@ -994,13 +994,20 @@ function initCustomLordUI() {
         freeStats: 0
       };
 
-      // 初始城池與武將 (22座城池)
+      // 初始城池與武將 (全部 29 座城池健全初始化)
       gameState.cities = CITIES.map(c => ({
         ...c,
         faction: c.id === customLordData.startingCity ? 'custom_faction' : 'neutral',
         troops: c.id === customLordData.startingCity ? 25000 : 10000,
-        gold: c.id === customLordData.startingCity ? 6000 : c.gold,
-        food: c.id === customLordData.startingCity ? 25000 : c.food
+        gold: c.id === customLordData.startingCity ? 6000 : 2500,
+        food: c.id === customLordData.startingCity ? 25000 : 10000,
+        morale: 85,
+        agriculture: c.agriculture || 250,
+        commerce: c.commerce || 250,
+        defense: c.defense || 600,
+        maxAgriculture: c.maxAgriculture || 800,
+        maxCommerce: c.maxCommerce || 800,
+        maxDefense: c.maxDefense || 1100
       }));
 
       gameState.generals = [customGen, ...GENERALS.map(g => ({ ...g, faction: 'neutral', loyalty: 50 }))];
@@ -1052,72 +1059,173 @@ function openAchievementsModal() {
 }
 
 // ==================== 科技樹軍略府系統 ====================
+let currentTechTab = 'military';
+
 function openTechTreeModal() {
   const elTechOverlay = document.getElementById('tech-overlay');
   if (!elTechOverlay || typeof TECH_TREE === 'undefined') return;
   playSound('select');
   elTechOverlay.classList.remove('hidden');
 
-  const elTechGrid = document.getElementById('tech-tree-grid');
-  if (elTechGrid) {
-    elTechGrid.innerHTML = '';
-    const myTechs = gameState.researchedTechs || [];
+  // 計算國庫黃金與糧草
+  const myCities = gameState.cities.filter(c => c.faction === gameState.playerFactionId);
+  const totalGold = myCities.reduce((sum, c) => sum + (Number(c.gold) || 0), 0);
+  const totalFood = myCities.reduce((sum, c) => sum + (Number(c.food) || 0), 0);
 
-    TECH_TREE.forEach(tech => {
-      const isResearched = myTechs.includes(tech.id);
-      const card = document.createElement('div');
-      card.className = 'glass-panel';
-      card.style.padding = '12px';
-      card.style.border = isResearched ? '1px solid #4caf50' : '1px solid rgba(255,255,255,0.2)';
-      card.style.borderRadius = '8px';
-      card.style.background = isResearched ? 'rgba(76,175,80,0.15)' : 'rgba(0,0,0,0.4)';
+  const elGoldDisp = document.getElementById('tech-player-gold');
+  if (elGoldDisp) elGoldDisp.textContent = totalGold;
 
-      card.innerHTML = `
-        <div style="font-size: 1.1rem; font-weight: bold; color: ${isResearched ? '#81c784' : '#ffd700'};">${tech.icon} ${tech.name} ${isResearched ? '【已掌握】' : ''}</div>
-        <div style="font-size: 0.85rem; color: #ccc; margin: 6px 0;">${tech.desc}</div>
-        <div style="font-size: 0.8rem; color: var(--color-gold);">研發費用：黃金 ${tech.costGold}，糧草 ${tech.costFood}</div>
-        <button class="btn-primary" style="margin-top: 8px; width: 100%; padding: 6px;" ${isResearched ? 'disabled' : ''} id="btn-tech-${tech.id}">
-          ${isResearched ? '已研發' : '立即研發'}
-        </button>
-      `;
-
-      elTechGrid.appendChild(card);
-
-      const btn = card.querySelector(`#btn-tech-${tech.id}`);
-      if (btn && !isResearched) {
-        btn.addEventListener('click', () => {
-          const myCities = gameState.cities.filter(c => c.faction === gameState.playerFactionId);
-          const totalGold = myCities.reduce((sum, c) => sum + c.gold, 0);
-          const totalFood = myCities.reduce((sum, c) => sum + c.food, 0);
-
-          if (totalGold < tech.costGold || totalFood < tech.costFood) {
-            alert('國庫黃金或糧草不足，無法研發！');
-            return;
-          }
-
-          // 扣除費用
-          let remGold = tech.costGold;
-          let remFood = tech.costFood;
-          for (const c of myCities) {
-            const takeG = Math.min(c.gold, remGold);
-            c.gold -= takeG;
-            remGold -= takeG;
-            const takeF = Math.min(c.food, remFood);
-            c.food -= takeF;
-            remFood -= takeF;
-            if (remGold <= 0 && remFood <= 0) break;
-          }
-
-          if (!gameState.researchedTechs) gameState.researchedTechs = [];
-          gameState.researchedTechs.push(tech.id);
-          playSound('command_ok');
-          addLog(`🔬【科技研發】勢力成功掌握【${tech.name}】！科技實力全面提升！`, 'system');
-          updateGlobalStats();
-          openTechTreeModal();
-        });
-      }
+  // 綁定標籤頁按鈕
+  const btnMil = document.getElementById('tab-military-tech');
+  const btnCiv = document.getElementById('tab-civil-tech');
+  
+  if (btnMil && !btnMil._bound) {
+    btnMil._bound = true;
+    btnMil.addEventListener('click', () => {
+      currentTechTab = 'military';
+      btnMil.classList.add('active');
+      if (btnCiv) btnCiv.classList.remove('active');
+      renderTechTreeNodes();
     });
   }
+  if (btnCiv && !btnCiv._bound) {
+    btnCiv._bound = true;
+    btnCiv.addEventListener('click', () => {
+      currentTechTab = 'civil';
+      btnCiv.classList.add('active');
+      if (btnMil) btnMil.classList.remove('active');
+      renderTechTreeNodes();
+    });
+  }
+
+  renderTechTreeNodes();
+}
+
+function renderTechTreeNodes() {
+  const elTechGrid = document.getElementById('tech-tree-grid');
+  if (!elTechGrid) return;
+
+  elTechGrid.innerHTML = '';
+  const myTechs = gameState.researchedTechs || [];
+  const filteredTechs = TECH_TREE.filter(t => (t.category || 'military') === currentTechTab);
+
+  filteredTechs.forEach(tech => {
+    const isResearched = myTechs.includes(tech.id);
+    const costGold = tech.cost || 2000;
+    const costFood = tech.costFood || Math.floor(costGold * 2.5);
+    const descText = tech.description || '強國利兵之策。';
+
+    const card = document.createElement('div');
+    card.className = `tech-node-card glass-panel ${isResearched ? 'researched' : ''}`;
+    card.style.padding = '12px';
+    card.style.border = isResearched ? '1.5px solid #4caf50' : '1px solid rgba(255,255,255,0.2)';
+    card.style.borderRadius = '8px';
+    card.style.background = isResearched ? 'rgba(76,175,80,0.15)' : 'rgba(0,0,0,0.45)';
+    card.style.cursor = 'pointer';
+
+    card.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 1.1rem; font-weight: bold; color: ${isResearched ? '#81c784' : '#ffd700'};">
+          ${tech.icon || '🛡️'} ${tech.name}
+        </span>
+        <span style="font-size: 0.75rem; color: ${isResearched ? '#81c784' : '#ffb74d'}; font-weight: bold;">
+          ${isResearched ? '【已掌握】' : `第 ${tech.tier || 1} 階`}
+        </span>
+      </div>
+      <div style="font-size: 0.85rem; color: #ddd; margin: 8px 0; line-height: 1.4;">${descText}</div>
+      <div style="font-size: 0.8rem; color: var(--color-gold); margin-bottom: 8px;">
+        研發需求：黃金 <b>${costGold}</b> 兩，糧草 <b>${costFood}</b> 石
+      </div>
+      <button class="btn-primary" style="width: 100%; padding: 6px; font-weight: bold; background: ${isResearched ? '#37474f' : 'linear-gradient(135deg, #f57f17, #e65100)'};" ${isResearched ? 'disabled' : ''} id="btn-tech-${tech.id}">
+        ${isResearched ? '✅ 已研發完畢' : '⚡ 立即研發'}
+      </button>
+    `;
+
+    // 點擊卡片更新右側詳細資訊
+    card.addEventListener('click', (e) => {
+      if (e.target.tagName === 'BUTTON') return;
+      showTechDetail(tech, isResearched, costGold, costFood);
+    });
+
+    elTechGrid.appendChild(card);
+
+    // 立即研發按鈕
+    const btn = card.querySelector(`#btn-tech-${tech.id}`);
+    if (btn && !isResearched) {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const myCities = gameState.cities.filter(c => c.faction === gameState.playerFactionId);
+        const totalGold = myCities.reduce((sum, c) => sum + (Number(c.gold) || 0), 0);
+        const totalFood = myCities.reduce((sum, c) => sum + (Number(c.food) || 0), 0);
+
+        if (totalGold < costGold || totalFood < costFood) {
+          alert(`國庫資源不足！研發【${tech.name}】需要黃金 ${costGold} 兩、糧草 ${costFood} 石（當前國庫：黃金 ${totalGold}、糧草 ${totalFood}）。`);
+          return;
+        }
+
+        // 扣除國庫資源
+        let remGold = costGold;
+        let remFood = costFood;
+        for (const c of myCities) {
+          const takeG = Math.min(Number(c.gold) || 0, remGold);
+          c.gold -= takeG;
+          remGold -= takeG;
+          const takeF = Math.min(Number(c.food) || 0, remFood);
+          c.food -= takeF;
+          remFood -= takeF;
+          if (remGold <= 0 && remFood <= 0) break;
+        }
+
+        if (!gameState.researchedTechs) gameState.researchedTechs = [];
+        gameState.researchedTechs.push(tech.id);
+
+        if (typeof tech.effect === 'function') {
+          if (!gameState.techBonuses) {
+            gameState.techBonuses = {
+              attackBonus: 0,
+              defenseBonus: 0,
+              infantryDefense: 0,
+              cavalryDamage: 0,
+              siegeDamage: 0,
+              maxMorale: 100
+            };
+          }
+          tech.effect(gameState);
+        }
+
+        playSound('command_ok');
+        addLog(`🔬【科技突破】勢力成功掌握【${tech.name}】！軍事與國力大幅精進！`, 'highlight');
+        updateGlobalStats();
+        openTechTreeModal();
+      });
+    }
+  });
+
+  // 預設展示第一個科技詳情
+  if (filteredTechs.length > 0) {
+    const first = filteredTechs[0];
+    const isRes = myTechs.includes(first.id);
+    showTechDetail(first, isRes, first.cost || 2000, first.costFood || Math.floor((first.cost || 2000) * 2.5));
+  }
+}
+
+function showTechDetail(tech, isResearched, costGold, costFood) {
+  const detIcon = document.getElementById('tech-det-icon');
+  const detName = document.getElementById('tech-det-name');
+  const detTier = document.getElementById('tech-det-tier');
+  const detCost = document.getElementById('tech-det-cost');
+  const detReq = document.getElementById('tech-det-requires-text');
+  const detDesc = document.getElementById('tech-det-desc');
+
+  if (detIcon) detIcon.textContent = tech.icon || '🛡️';
+  if (detName) detName.textContent = tech.name;
+  if (detTier) detTier.textContent = isResearched ? '【已掌握・生效中】' : `第 ${tech.tier || 1} 階科技`;
+  if (detCost) detCost.textContent = `黃金 ${costGold} 兩，糧草 ${costFood} 石`;
+  if (detReq) detReq.textContent = (tech.requires && tech.requires.length > 0) ? tech.requires.map(r => {
+    const rTech = TECH_TREE.find(t => t.id === r);
+    return rTech ? rTech.name : r;
+  }).join('、') : '無 (初階核心科技)';
+  if (detDesc) detDesc.textContent = tech.description || '強國利兵之策。';
 }
 
 // ==================== 家族、子嗣與少主成長系統 ====================
@@ -1873,9 +1981,9 @@ function updateGlobalStats() {
   const factionCities = gameState.cities.filter(c => c.faction === gameState.playerFactionId);
   const factionGenerals = gameState.generals.filter(g => g.faction === gameState.playerFactionId);
   
-  const totalGold = factionCities.reduce((sum, c) => sum + c.gold, 0);
-  const totalFood = factionCities.reduce((sum, c) => sum + c.food, 0);
-  const totalTroops = factionCities.reduce((sum, c) => sum + c.troops, 0);
+  const totalGold = factionCities.reduce((sum, c) => sum + (Number(c.gold) || 0), 0);
+  const totalFood = factionCities.reduce((sum, c) => sum + (Number(c.food) || 0), 0);
+  const totalTroops = factionCities.reduce((sum, c) => sum + (Number(c.troops) || 0), 0);
   
   elFactionGold.textContent = totalGold;
   elFactionFood.textContent = totalFood;
