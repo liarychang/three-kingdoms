@@ -53,6 +53,7 @@
     </div>
 
     <div class="top-actions-group">
+      <button class="audio-toggle" id="btn-top-movie" onclick="playOpeningCinematic()" title="播放史詩開場影片" style="border-color: #ba68c8; color: #ce93d8; background: rgba(186, 104, 200, 0.15); font-weight: bold;">🎬</button>
       <button class="audio-toggle" id="multiplayer-btn" title="多人連線對戰大廳" style="border-color: #ffd700; color: #ffd700; background: rgba(255, 215, 0, 0.15); font-weight: bold;">🌐</button>
       <span class="season-badge" id="mp-online-badge" style="display:none; background: rgba(76, 175, 80, 0.2); border: 1px solid #4caf50; color: #81c784; font-size: 0.75rem; padding: 2px 8px; border-radius: 12px;"></span>
       <button class="audio-toggle" id="family-btn" title="家族子嗣府">👶</button>
@@ -435,6 +436,48 @@
     </button>
   </nav>
 
+  
+  <!-- ==================== 🎬 史詩級代表性開場影片 Overlay (Grand Opening Cinematic) ==================== -->
+  <div class="grand-cinematic-overlay hidden" id="grand-opening-cinematic-overlay">
+    <!-- 背景動態電影畫布與鏡頭推進 -->
+    <div class="grand-cinematic-stage" id="grand-cinematic-stage">
+      <div class="grand-cinematic-bg-layer" id="grand-cinematic-bg"></div>
+      <div class="grand-cinematic-vignette"></div>
+      <canvas class="grand-cinematic-canvas" id="grand-cinematic-canvas"></canvas>
+      <div class="grand-cinematic-flash" id="grand-cinematic-flash"></div>
+    </div>
+
+    <!-- 頂部與底部 21:9 電影寬螢幕黑邊 (Cinematic Letterbox) -->
+    <div class="cinematic-letterbox letterbox-top">
+      <div class="letterbox-title">《三國志：逐鹿中原・天下歸一》</div>
+      <button class="btn-cinematic-skip" id="btn-grand-cinematic-skip" onclick="skipOpeningCinematic()">跳過開場 ▶▶</button>
+    </div>
+    <div class="cinematic-letterbox letterbox-bottom">
+      <div class="cinematic-progressbar"><div class="cinematic-progress-inner" id="grand-cinematic-progress-bar"></div></div>
+    </div>
+
+    <!-- 🎬 中央字幕與史詩書法詩詞 -->
+    <div class="grand-cinematic-content">
+      <div class="grand-poem-box" id="grand-poem-box">
+        <div class="grand-scene-tag" id="grand-scene-tag">📜 序章・天下大勢</div>
+        <div class="grand-poem-main" id="grand-poem-main">滾滾長江東逝水，浪花淘盡英雄。</div>
+        <div class="grand-poem-sub" id="grand-poem-sub">是非成敗轉頭空。青山依舊在，幾度夕陽紅。</div>
+      </div>
+
+      <!-- 👑 結尾霸業定鼎召喚卡 (Finale Deck) -->
+      <div class="grand-finale-card hidden" id="grand-finale-card">
+        <div class="grand-dragon-seal">👑</div>
+        <h1 class="grand-finale-title">三國志：逐鹿中原</h1>
+        <p class="grand-finale-subtitle">東漢末年，群雄並起。天命所歸，定鼎九州！</p>
+        <div class="grand-finale-actions">
+          <button class="btn-grand-action btn-start-war" onclick="closeCinematicAndStart()">🔥 進入大爭之世</button>
+          <button class="btn-grand-action btn-create-lord" onclick="closeCinematicAndCustomLord()">👑 自創霸業君主</button>
+          <button class="btn-grand-action btn-replay-movie" onclick="replayOpeningCinematic()">↺ 重新播放</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== 彈出視窗與模態框 ==================== -->
 
   <!-- 遊戲開始：劇本與勢力選擇 overlay -->
@@ -464,10 +507,11 @@
         <div class="faction-preview-desc" id="scenario-preview-text">
           請點擊上方劇本，查看時代背景。
         </div>
-        <div style="display: flex; gap: 10px;">
+        <div style="display: flex; gap: 10px; margin-bottom: 8px;">
           <button class="btn-start-game" id="confirm-scenario-btn" disabled style="flex:1;">確認劇本</button>
           <button class="btn-start-game" id="btn-open-custom-lord" style="background: linear-gradient(135deg, #d4af37 0%, #b71c1c 100%); color: #fff; border-color: #ffd54f; font-weight: bold; flex:1;">👑 自創君主立足</button>
         </div>
+        <button class="btn-start-game" id="btn-play-opening-movie" onclick="playOpeningCinematic()" style="background: linear-gradient(135deg, rgba(142, 36, 170, 0.6), rgba(26, 35, 126, 0.8)); border-color: #ba68c8; color: #f3e5f5; font-weight: bold; width: 100%; font-size: 0.92rem; padding: 10px; box-shadow: 0 4px 15px rgba(186,104,200,0.3);">🎬 欣賞史詩開場影片 (Epic Cinematic Intro)</button>
       </div>
 
       <!-- 勢力選擇區 (初始隱藏) -->
@@ -1448,6 +1492,6 @@
 
   <!-- 遊戲核心 JS 腳本 -->
   <!-- 注意：我們使用 script type="module" 來使用 ES6 import -->
-  <script type="module" src="game.js?v=202608161716"></script>
+  <script type="module" src="game.js?v=202608161727"></script>
 </body>
 </html>

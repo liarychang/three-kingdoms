@@ -1,4 +1,305 @@
 
+// ==================== 🎬 史詩級代表性開場影片引擎 (Grand Opening Cinematic Engine) ====================
+const CINEMATIC_SCENES = [
+  {
+    tag: '📜 序章・天下大勢',
+    bg: 'koei_map_bg.jpg',
+    main: '滾滾長江東逝水，浪花淘盡英雄。',
+    sub: '是非成敗轉頭空。青山依舊在，幾度夕陽紅。',
+    particles: 'mist',
+    duration: 5000
+  },
+  {
+    tag: '🌸 桃園結義・匡扶漢室',
+    bg: 'cinematic_brotherhood.jpg',
+    main: '同心協力，救困扶危；誓定生死，豪氣干雲！',
+    sub: '『念劉備、關羽、張飛，不求同年同月同日生，但願同年同月同日死！』',
+    particles: 'cherry',
+    duration: 5500
+  },
+  {
+    tag: '⚔️ 群雄割據・亂世梟雄',
+    bg: 'cinematic_conspiracy.jpg',
+    main: '設使天下無有孤，不知當幾人稱帝，幾人稱王！',
+    sub: '董卓擅權洛陽，曹操刺董起兵，十八路諸侯歃血討逆，九州烽煙四起！',
+    particles: 'storm',
+    duration: 5500
+  },
+  {
+    tag: '🔥 赤壁鏖兵・天下三分',
+    bg: 'cinematic_fire.jpg',
+    main: '大江東去，浪淘盡，千古風流人物！',
+    sub: '周郎羽扇綸巾，談笑間檣櫓灰飛煙滅。三分天下之勢，自此底定！',
+    particles: 'fire',
+    duration: 6000
+  },
+  {
+    tag: '👑 天下歸一・霸業定鼎',
+    bg: 'cinematic_coronation.jpg',
+    main: '天命所歸，逐鹿中原！',
+    sub: '主公，請統帥百萬雄師，開創萬世不拔之霸業！',
+    particles: 'gold',
+    duration: 6000
+  }
+];
+
+let cinematicSceneIdx = 0;
+let cinematicTimer = null;
+let cinematicProgressInterval = null;
+let cinematicParticlesCtx = null;
+let cinematicParticles = [];
+let cinematicAnimId = null;
+
+window.playOpeningCinematic = function() {
+  const overlay = document.getElementById('grand-opening-cinematic-overlay');
+  if (!overlay) return;
+
+  overlay.classList.remove('hidden');
+  cinematicSceneIdx = 0;
+
+  // 播放史詩戰鬥音樂
+  playBGM('battle');
+
+  // 初始化粒子畫布
+  initCinematicParticles();
+
+  // 播放第一幕
+  renderCinematicScene(0);
+};
+
+window.skipOpeningCinematic = function() {
+  showCinematicFinale();
+};
+
+window.replayOpeningCinematic = function() {
+  cinematicSceneIdx = 0;
+  renderCinematicScene(0);
+};
+
+window.closeCinematicAndStart = function() {
+  const overlay = document.getElementById('grand-opening-cinematic-overlay');
+  if (overlay) overlay.classList.add('hidden');
+  stopCinematicParticles();
+  if (cinematicTimer) clearTimeout(cinematicTimer);
+  if (cinematicProgressInterval) clearInterval(cinematicProgressInterval);
+
+  // 如果尚未開局，啟動遊戲
+  const startOverlay = document.getElementById('start-overlay');
+  if (startOverlay && !startOverlay.classList.contains('hidden')) {
+    startGame();
+  }
+};
+
+window.closeCinematicAndCustomLord = function() {
+  window.closeCinematicAndStart();
+  const btnCustom = document.getElementById('btn-open-custom-lord');
+  if (btnCustom) btnCustom.click();
+};
+
+window.renderCinematicScene = renderCinematicScene;
+window.showCinematicFinale = showCinematicFinale;
+
+function renderCinematicScene(idx) {
+  if (idx >= CINEMATIC_SCENES.length) {
+    showCinematicFinale();
+    return;
+  }
+
+  cinematicSceneIdx = idx;
+  const scene = CINEMATIC_SCENES[idx];
+  const bgEl = document.getElementById('grand-cinematic-bg');
+  const tagEl = document.getElementById('grand-scene-tag');
+  const mainEl = document.getElementById('grand-poem-main');
+  const subEl = document.getElementById('grand-poem-sub');
+  const poemBox = document.getElementById('grand-poem-box');
+  const finaleCard = document.getElementById('grand-finale-card');
+  const flashEl = document.getElementById('grand-cinematic-flash');
+
+  if (finaleCard) {
+    finaleCard.classList.add('hidden');
+    finaleCard.style.display = 'none';
+  }
+  if (poemBox) {
+    poemBox.classList.remove('hidden');
+    poemBox.style.display = 'block';
+  }
+
+  // 閃光轉場
+  if (flashEl) {
+    flashEl.classList.add('active');
+    setTimeout(() => flashEl.classList.remove('active'), 250);
+  }
+
+  // 變換背景與慢速縮放
+  if (bgEl) {
+    bgEl.style.opacity = '0';
+    setTimeout(() => {
+      bgEl.style.backgroundImage = `url('${scene.bg}')`;
+      bgEl.classList.remove('animating');
+      void bgEl.offsetWidth; // Trigger reflow
+      bgEl.classList.add('animating');
+      bgEl.style.opacity = '1';
+    }, 150);
+  }
+
+  if (tagEl) tagEl.textContent = scene.tag;
+  if (mainEl) mainEl.textContent = scene.main;
+  if (subEl) subEl.textContent = scene.sub;
+
+  // 重新觸發詩詞淡入動畫
+  if (poemBox) {
+    poemBox.style.animation = 'none';
+    void poemBox.offsetWidth;
+    poemBox.style.animation = 'poemFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+  }
+
+  // 切換粒子氛圍
+  setCinematicParticleMode(scene.particles);
+
+  // 進度條動畫
+  startCinematicProgress(scene.duration);
+
+  if (cinematicTimer) clearTimeout(cinematicTimer);
+  cinematicTimer = setTimeout(() => {
+    renderCinematicScene(idx + 1);
+  }, scene.duration);
+}
+
+function showCinematicFinale() {
+  if (cinematicTimer) clearTimeout(cinematicTimer);
+  if (cinematicProgressInterval) clearInterval(cinematicProgressInterval);
+
+  const poemBox = document.getElementById('grand-poem-box');
+  const finaleCard = document.getElementById('grand-finale-card');
+  const bgEl = document.getElementById('grand-cinematic-bg');
+
+  if (poemBox) {
+    poemBox.classList.add('hidden');
+    poemBox.style.display = 'none';
+  }
+  if (finaleCard) {
+    finaleCard.classList.remove('hidden');
+    finaleCard.style.display = 'flex';
+  }
+
+  if (bgEl) {
+    bgEl.style.backgroundImage = "url('cinematic_coronation.jpg')";
+    bgEl.style.opacity = '1';
+  }
+
+  setCinematicParticleMode('gold');
+  playSound('victory');
+}
+
+function startCinematicProgress(duration) {
+  if (cinematicProgressInterval) clearInterval(cinematicProgressInterval);
+  const bar = document.getElementById('grand-cinematic-progress-bar');
+  if (!bar) return;
+
+  bar.style.width = '0%';
+  const startTime = Date.now();
+  cinematicProgressInterval = setInterval(() => {
+    const elapsed = Date.now() - startTime;
+    const pct = Math.min(100, (elapsed / duration) * 100);
+    bar.style.width = `${pct}%`;
+    if (pct >= 100) clearInterval(cinematicProgressInterval);
+  }, 30);
+}
+
+// 🎬 電影級動態粒子引擎 (櫻花、戰火烈焰、閃電雲霧、金光龍氣)
+let currentParticleMode = 'mist';
+
+function initCinematicParticles() {
+  const canvas = document.getElementById('grand-cinematic-canvas');
+  if (!canvas) return;
+  cinematicParticlesCtx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  cinematicParticles = [];
+  for (let i = 0; i < 60; i++) {
+    cinematicParticles.push(createCinematicParticle());
+  }
+
+  if (cinematicAnimId) cancelAnimationFrame(cinematicAnimId);
+  animateCinematicParticles();
+}
+
+function setCinematicParticleMode(mode) {
+  currentParticleMode = mode;
+}
+
+function createCinematicParticle() {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  return {
+    x: Math.random() * w,
+    y: Math.random() * h,
+    size: Math.random() * 5 + 2,
+    speedX: Math.random() * 3 - 1.5,
+    speedY: Math.random() * 2 + 1,
+    rotation: Math.random() * Math.PI * 2,
+    rotSpeed: (Math.random() - 0.5) * 0.08,
+    opacity: Math.random() * 0.7 + 0.3
+  };
+}
+
+function animateCinematicParticles() {
+  const canvas = document.getElementById('grand-cinematic-canvas');
+  if (!canvas || !cinematicParticlesCtx) return;
+  const ctx = cinematicParticlesCtx;
+  const w = canvas.width;
+  const h = canvas.height;
+
+  ctx.clearRect(0, 0, w, h);
+
+  cinematicParticles.forEach(p => {
+    p.x += p.speedX;
+    p.y += p.speedY;
+    p.rotation += p.rotSpeed;
+
+    if (p.y > h) { p.y = -10; p.x = Math.random() * w; }
+    if (p.x > w) p.x = 0;
+    if (p.x < 0) p.x = w;
+
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rotation);
+    ctx.globalAlpha = p.opacity;
+
+    if (currentParticleMode === 'cherry') {
+      ctx.fillStyle = '#f48fb1';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, p.size * 1.5, p.size * 0.8, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (currentParticleMode === 'fire') {
+      ctx.fillStyle = Math.random() > 0.5 ? '#ff5722' : '#ffb300';
+      ctx.beginPath();
+      ctx.arc(0, 0, p.size * 0.9, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (currentParticleMode === 'gold') {
+      ctx.fillStyle = '#ffd700';
+      ctx.beginPath();
+      ctx.arc(0, 0, p.size * 0.8, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.beginPath();
+      ctx.arc(0, 0, p.size * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  });
+
+  cinematicAnimId = requestAnimationFrame(animateCinematicParticles);
+}
+
+function stopCinematicParticles() {
+  if (cinematicAnimId) cancelAnimationFrame(cinematicAnimId);
+}
+
+
 // ==================== 🗺️ 地圖手勢縮放/平移引擎 & 徹底防刷新 (In-Game Pan/Zoom Engine) ====================
 let mapScale = 1.0;
 let mapPanX = 0;
