@@ -2157,11 +2157,17 @@ function updateGlobalStats() {
   elPlayerLeaderName.textContent = pFaction.leader;
   elPlayerFactionName.textContent = `${pFaction.name}軍勢力`;
   
-  if (leaderGen) {
+  if (leaderGen && leaderGen.stats) {
+    const lLead = leaderGen.stats.lead || leaderGen.stats.lea || 80;
+    const lStr = leaderGen.stats.str || leaderGen.stats.war || 80;
+    const lInt = leaderGen.stats.int || 80;
+    const lPol = leaderGen.stats.pol || 80;
+    const lCha = leaderGen.stats.cha || 80;
     elPlayerFactionDesc.innerHTML = `
-      統率: ${leaderGen.stats.lead} | 武力: ${leaderGen.stats.str} | 智力: ${leaderGen.stats.int}<br>
-      政治: ${leaderGen.stats.pol} | 魅力: ${leaderGen.stats.cha}<br>
-      <span style="color: var(--color-gold-bright);">控制城池數：${factionCities.length} / ${gameState.cities.length}</span>
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.68rem; margin-top: 3px; background: rgba(0,0,0,0.3); padding: 2px 5px; border-radius: 4px; white-space: nowrap;">
+        <span style="white-space: nowrap;"><strong style="color:#42a5f5;">統</strong>${lLead} <strong style="color:#ef5350;">武</strong>${lStr} <strong style="color:#ab47bc;">智</strong>${lInt} <strong style="color:#66bb6a;">政</strong>${lPol} <strong style="color:#ffa726;">魅</strong>${lCha}</span>
+        <span style="color: var(--color-gold-bright); font-weight: bold; margin-left: 2px; white-space: nowrap;">城池 ${factionCities.length}/${gameState.cities.length}</span>
+      </div>
     `;
   }
   

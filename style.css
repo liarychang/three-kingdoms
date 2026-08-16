@@ -5010,3 +5010,523 @@ body {
   font-weight: 900;
   font-size: 0.75rem;
 }
+
+
+/* ==================== 🎯 全螢幕完美自適應與零溢出 (Fit-Screen Master Layout) ==================== */
+html, body {
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+/* 頂部 HUD (極致緊湊高度 48px，徹底消除左側與右側溢出) */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 10px;
+  height: 48px;
+  min-height: 48px;
+  max-height: 48px;
+  flex-shrink: 0;
+  z-index: 100;
+  border-bottom: 2px solid var(--color-panel-border);
+  background: linear-gradient(to bottom, rgba(28, 22, 16, 0.98), rgba(16, 12, 8, 0.98));
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+  gap: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.top-bar .game-title {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: var(--color-gold-bright);
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.top-bar .game-title span {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 1px 4px;
+  border: 1px solid var(--color-gold);
+  border-radius: 3px;
+}
+
+.stats-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.faction-status-area {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  flex-shrink: 0;
+}
+
+.lord-portrait-frame {
+  width: 34px;
+  height: 34px;
+  border-radius: 4px;
+  border: 1.5px solid #ffd700;
+  background-size: cover;
+  background-position: center top;
+  flex-shrink: 0;
+}
+
+.lord-stats-bars-grid {
+  display: flex;
+  gap: 4px;
+  margin-top: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.lord-stat-mini-pill {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.7rem;
+}
+
+.lord-stat-mini-label {
+  font-size: 0.62rem;
+  color: #aaa;
+}
+
+.lord-stat-mini-val {
+  font-weight: 900;
+  font-size: 0.75rem;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.stat-label {
+  font-size: 0.62rem;
+  color: var(--color-text-dim);
+  margin-bottom: 2px;
+}
+
+.stat-value {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--color-gold-bright);
+}
+
+.season-badge {
+  font-size: 0.72rem;
+  font-weight: bold;
+}
+
+.top-actions-group {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.audio-toggle {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  padding: 0;
+  font-size: 0.85rem;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 主內容三欄佈局 (高度嚴格佔滿 100vh - 48px，零外溢) */
+.main-content {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 220px 1fr 280px;
+  height: calc(100vh - 48px);
+  max-height: calc(100vh - 48px);
+  gap: 8px;
+  padding: 6px 10px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* 左側情報面板 */
+.left-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.faction-info-card {
+  padding: 8px 10px;
+  flex-shrink: 0;
+}
+
+.leader-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.leader-portrait {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 6px;
+  border: 1.5px solid var(--color-gold);
+  background-size: cover;
+  background-position: center top;
+}
+
+.leader-details {
+  flex: 1;
+  overflow: hidden;
+}
+
+.leader-name {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: var(--color-gold-bright);
+}
+
+.faction-name {
+  font-size: 0.75rem;
+  color: #ccc;
+}
+
+.faction-summary {
+  font-size: 0.72rem;
+  color: var(--color-text-dim);
+  margin-top: 4px;
+  line-height: 1.25;
+  white-space: normal;
+  overflow: hidden;
+  max-height: 40px;
+}
+
+.log-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.log-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  font-weight: bold;
+  color: var(--color-gold);
+  margin-bottom: 4px;
+  flex-shrink: 0;
+}
+
+.log-filter-bar {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 4px;
+  padding-bottom: 4px;
+  flex-shrink: 0;
+}
+
+.log-filter-btn {
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+.log-messages {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.log-item {
+  font-size: 0.72rem;
+  padding: 3px 6px;
+  border-radius: 4px;
+  line-height: 1.25;
+}
+
+/* 中央地圖視窗 (全屏開闊比例，自適應最大化) */
+.map-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  max-height: 100%;
+  padding: 4px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.my-cities-nav-bar {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(20, 15, 10, 0.85);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  border-radius: 20px;
+  padding: 3px 10px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+  max-width: 92%;
+}
+
+.map-svg {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* 右側城池指令中樞 (超緊湊、無外溢、全部按鈕一屏盡收) */
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.city-detail-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 100%;
+  overflow-y: auto;
+  gap: 6px;
+}
+
+.city-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+  flex-shrink: 0;
+}
+
+.city-name {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--color-gold-bright);
+}
+
+.city-faction-badge {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+/* 雙欄緊湊數值規格 */
+.city-compact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 8px;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  flex-shrink: 0;
+}
+
+.compact-gauge-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.compact-gauge-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.compact-gauge-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  font-weight: bold;
+  color: #ddd;
+}
+
+.compact-gauge-header span:last-child {
+  color: var(--color-gold);
+}
+
+.city-compact-grid .attr-bar-container {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.city-compact-grid .attr-bar {
+  height: 100%;
+  border-radius: 2px;
+}
+
+.compact-res-row {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  padding-top: 2px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+  color: #eee;
+}
+
+.compact-res-row strong {
+  color: var(--color-gold-bright);
+}
+
+/* 城池指令中樞區 (3 大分類，緊湊好點擊) */
+.city-command-deck {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.deck-category {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+
+.deck-category-title {
+  font-size: 0.68rem;
+  font-weight: bold;
+  color: #ffd700;
+  margin-bottom: 3px;
+  display: block;
+}
+
+.deck-btn-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(46px, 1fr));
+  gap: 3px;
+}
+
+.btn-cmd {
+  padding: 4px 2px;
+  font-size: 0.72rem;
+  font-weight: bold;
+  border-radius: 4px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.btn-cmd-attack {
+  background: linear-gradient(135deg, rgba(229, 57, 53, 0.9), rgba(183, 28, 28, 0.95)) !important;
+  color: #fff !important;
+  border-color: #ff5252 !important;
+}
+
+/* 駐軍武將列表 */
+.generals-section {
+  margin-top: 2px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 60px;
+}
+
+.section-title {
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: var(--color-gold);
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.generals-list {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 110px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.general-item {
+  padding: 3px 6px;
+  font-size: 0.72rem;
+}
+
+/* 獨立懸浮【下個月】傳國玉璽按鈕 (緊湊右下角) */
+.floating-end-turn-container {
+  position: absolute;
+  bottom: 8px;
+  right: 295px;
+  z-index: 40;
+}
+
+.btn-imperial-end-turn {
+  padding: 5px 14px;
+  font-size: 0.85rem;
+  border-radius: 20px;
+}
+
+.imperial-icon {
+  font-size: 1.1rem;
+}
+
+.imperial-main {
+  font-size: 0.85rem;
+}
+
+.imperial-sub {
+  font-size: 0.6rem;
+}

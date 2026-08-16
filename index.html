@@ -22,28 +22,28 @@
         <!-- JS 動態插入勢力徽章與領導者 -->
       </div>
       
-      <div class="stat-item">
-        <span class="stat-label">時間</span>
+      <div class="stat-item" title="當前年代月份">
+        <span class="stat-label">📅 時間</span>
         <span class="stat-value" id="game-date">190年 1月</span>
       </div>
       <div class="stat-item season-item" id="season-display" title="當前時節天候與經營加成">
-        <span class="stat-label">時令天候</span>
-        <span class="season-badge" id="season-badge">🌸 春生・農耕</span>
+        <span class="stat-label">時令</span>
+        <span class="season-badge" id="season-badge">🌸 春生</span>
       </div>
-      <div class="stat-item">
-        <span class="stat-label">勢力黃金</span>
+      <div class="stat-item" title="國庫黃金">
+        <span class="stat-label">💰 黃金</span>
         <span class="stat-value" id="faction-gold">0</span>
       </div>
-      <div class="stat-item">
-        <span class="stat-label">勢力糧草</span>
+      <div class="stat-item" title="全軍糧草儲備">
+        <span class="stat-label">🌾 糧草</span>
         <span class="stat-value" id="faction-food">0</span>
       </div>
-      <div class="stat-item">
-        <span class="stat-label">總兵力</span>
+      <div class="stat-item" title="全勢力總兵力">
+        <span class="stat-label">🛡️ 總兵力</span>
         <span class="stat-value" id="faction-troops">0</span>
       </div>
-      <div class="stat-item">
-        <span class="stat-label">武將數</span>
+      <div class="stat-item" title="麾下名將總數">
+        <span class="stat-label">🧑 武將</span>
         <span class="stat-value" id="faction-generals">0</span>
       </div>
     </div>
@@ -297,64 +297,31 @@
         </div>
         
         <div class="city-attrs">
-          <div class="attr-row-container">
-            <div class="attr-row">
-              <span class="attr-label">農業開發</span>
-              <span class="attr-value" id="val-agriculture">0 / 0</span>
+          <!-- 精簡高效雙欄數值與進度條 (超清晰、零溢出) -->
+          <div class="city-compact-grid">
+            <div class="compact-gauge-item">
+              <div class="compact-gauge-header"><span>🌾 農業</span><span id="val-agriculture">0/0</span></div>
+              <div class="attr-bar-container"><div class="attr-bar" id="bar-agriculture" style="width: 0%;"></div></div>
             </div>
-            <div class="attr-bar-container">
-              <div class="attr-bar" id="bar-agriculture" style="width: 0%;"></div>
+            <div class="compact-gauge-item">
+              <div class="compact-gauge-header"><span>💰 商業</span><span id="val-commerce">0/0</span></div>
+              <div class="attr-bar-container"><div class="attr-bar" id="bar-commerce" style="width: 0%;"></div></div>
             </div>
-          </div>
-          
-          <div class="attr-row-container">
-            <div class="attr-row">
-              <span class="attr-label">商業貿易</span>
-              <span class="attr-value" id="val-commerce">0 / 0</span>
+            <div class="compact-gauge-item">
+              <div class="compact-gauge-header"><span>🛡️ 城防</span><span id="val-defense">0/0</span></div>
+              <div class="attr-bar-container"><div class="attr-bar defense" id="bar-defense" style="width: 0%;"></div></div>
             </div>
-            <div class="attr-bar-container">
-              <div class="attr-bar" id="bar-commerce" style="width: 0%;"></div>
+            <div class="compact-gauge-item">
+              <div class="compact-gauge-header"><span>⚔️ 駐兵</span><span id="val-troops">0</span></div>
+              <div class="attr-bar-container"><div class="attr-bar troops" id="bar-troops" style="width: 0%;"></div></div>
             </div>
-          </div>
-          
-          <div class="attr-row-container">
-            <div class="attr-row">
-              <span class="attr-label">城防禦敵</span>
-              <span class="attr-value" id="val-defense">0 / 0</span>
+            <div class="compact-gauge-item full-width">
+              <div class="compact-gauge-header"><span>🔥 士氣</span><span id="val-morale">0%</span></div>
+              <div class="attr-bar-container"><div class="attr-bar morale" id="bar-morale" style="width: 0%;"></div></div>
             </div>
-            <div class="attr-bar-container">
-              <div class="attr-bar defense" id="bar-defense" style="width: 0%;"></div>
-            </div>
-          </div>
-
-          <div class="attr-row-container">
-            <div class="attr-row">
-              <span class="attr-label">駐守兵力</span>
-              <span class="attr-value" id="val-troops">0</span>
-            </div>
-            <div class="attr-bar-container">
-              <div class="attr-bar troops" id="bar-troops" style="width: 0%;"></div>
-            </div>
-          </div>
-
-          <div class="attr-row-container">
-            <div class="attr-row">
-              <span class="attr-label">部隊士氣</span>
-              <span class="attr-value" id="val-morale">0%</span>
-            </div>
-            <div class="attr-bar-container">
-              <div class="attr-bar morale" id="bar-morale" style="width: 0%;"></div>
-            </div>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px;">
-            <div class="attr-row" style="background: rgba(0,0,0,0.2); padding: 5px; border-radius: 4px;">
-              <span class="attr-label">庫存黃金</span>
-              <span class="attr-value" id="val-gold">0</span>
-            </div>
-            <div class="attr-row" style="background: rgba(0,0,0,0.2); padding: 5px; border-radius: 4px;">
-              <span class="attr-label">庫存糧草</span>
-              <span class="attr-value" id="val-food">0</span>
+            <div class="compact-res-row full-width">
+              <span>💰 城庫金: <strong id="val-gold">0</strong></span>
+              <span>🌾 城庫糧: <strong id="val-food">0</strong></span>
             </div>
           </div>
         </div>
@@ -1434,6 +1401,6 @@
 
   <!-- 遊戲核心 JS 腳本 -->
   <!-- 注意：我們使用 script type="module" 來使用 ES6 import -->
-  <script type="module" src="game.js?v=202608152050"></script>
+  <script type="module" src="game.js?v=202608161636"></script>
 </body>
 </html>
