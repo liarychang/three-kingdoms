@@ -286,6 +286,12 @@
         <!-- 城市節點 (動態生成) -->
         <g id="map-cities-group"></g>
       </svg>
+      <!-- 🗺️ 地圖縮放控制鈕 (支援單手一鍵放大/縮小/還原，徹底解決手勢誤觸刷新) -->
+      <div class="map-zoom-controls" id="map-zoom-controls">
+        <button class="btn-zoom" id="btn-zoom-in" onclick="zoomGameMap(1.2)" title="放大地圖">➕</button>
+        <button class="btn-zoom" id="btn-zoom-out" onclick="zoomGameMap(0.8)" title="縮小地圖">➖</button>
+        <button class="btn-zoom btn-zoom-reset" id="btn-zoom-reset" onclick="resetGameMapZoom()" title="還原視野">↺</button>
+      </div>
     </section>
 
     <!-- 右側面板：城市情報與駐防武將 -->
@@ -1442,6 +1448,6 @@
 
   <!-- 遊戲核心 JS 腳本 -->
   <!-- 注意：我們使用 script type="module" 來使用 ES6 import -->
-  <script type="module" src="game.js?v=202608161710"></script>
+  <script type="module" src="game.js?v=202608161716"></script>
 </body>
 </html>

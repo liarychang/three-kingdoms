@@ -6311,3 +6311,67 @@ html, body {
     margin-top: 10px !important;
   }
 }
+
+
+/* ==================== 🛡️ 行動端地圖平移縮放控制項與防刷新保護 ==================== */
+html, body, #app {
+  overscroll-behavior: none !important;
+  overscroll-behavior-y: none !important;
+  -webkit-overflow-scrolling: auto;
+}
+
+.map-panel {
+  touch-action: none !important;
+  overscroll-behavior: none !important;
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.map-svg {
+  touch-action: none !important;
+  will-change: transform;
+  transform-origin: center center;
+}
+
+/* 🗺️ 地圖縮放浮動快捷鍵 (行動端與桌面端通用) */
+.map-zoom-controls {
+  position: absolute;
+  left: 10px;
+  bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 35;
+  background: rgba(20, 15, 10, 0.85);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+}
+
+.btn-zoom {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  color: #ffd700;
+  font-size: 1.1rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-zoom:active {
+  transform: scale(0.9);
+  background: rgba(255, 215, 0, 0.3);
+}
+
+.btn-zoom-reset {
+  font-size: 0.85rem;
+}

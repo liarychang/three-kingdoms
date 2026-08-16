@@ -1,4 +1,109 @@
 
+// ==================== 🗺️ 地圖手勢縮放/平移引擎 & 徹底防刷新 (In-Game Pan/Zoom Engine) ====================
+let mapScale = 1.0;
+let mapPanX = 0;
+let mapPanY = 0;
+let isPanningMap = false;
+let startPanX = 0;
+let startPanY = 0;
+let initialPinchDist = 0;
+let initialPinchScale = 1.0;
+
+function updateMapTransform() {
+  const mapSvg = document.getElementById('game-map');
+  if (!mapSvg) return;
+  mapSvg.style.transform = `translate(${mapPanX}px, ${mapPanY}px) scale(${mapScale})`;
+}
+
+window.zoomGameMap = function(factor) {
+  mapScale = Math.max(0.7, Math.min(2.8, mapScale * factor));
+  updateMapTransform();
+};
+
+window.resetGameMapZoom = function() {
+  mapScale = 1.0;
+  mapPanX = 0;
+  mapPanY = 0;
+  updateMapTransform();
+};
+
+function initMapTouchGestures() {
+  const mapPanel = document.getElementById('center-map-viewport');
+  const mapSvg = document.getElementById('game-map');
+  if (!mapPanel || !mapSvg) return;
+
+  // 1. 阻止瀏覽器在 mapPanel 上的默認下拉刷新或整體頁面手勢
+  mapPanel.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+  }, { passive: false });
+
+  // 2. 觸控開始 (單指平移 / 雙指捏合縮放)
+  mapPanel.addEventListener('touchstart', function(e) {
+    if (e.touches.length === 1) {
+      isPanningMap = true;
+      startPanX = e.touches[0].clientX - mapPanX;
+      startPanY = e.touches[0].clientY - mapPanY;
+    } else if (e.touches.length === 2) {
+      isPanningMap = false;
+      initialPinchDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      initialPinchScale = mapScale;
+    }
+  }, { passive: false });
+
+  // 3. 觸控移動 (平滑拖拽與縮放)
+  mapPanel.addEventListener('touchmove', function(e) {
+    if (e.touches.length === 1 && isPanningMap) {
+      mapPanX = e.touches[0].clientX - startPanX;
+      mapPanY = e.touches[0].clientY - startPanY;
+      
+      // 限制拖拽邊界防脫離視野
+      const maxPan = 300 * mapScale;
+      mapPanX = Math.max(-maxPan, Math.min(maxPan, mapPanX));
+      mapPanY = Math.max(-maxPan, Math.min(maxPan, mapPanY));
+      
+      updateMapTransform();
+    } else if (e.touches.length === 2 && initialPinchDist > 0) {
+      const currentDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const factor = currentDist / initialPinchDist;
+      mapScale = Math.max(0.7, Math.min(2.8, initialPinchScale * factor));
+      updateMapTransform();
+    }
+  }, { passive: false });
+
+  // 4. 觸控結束
+  mapPanel.addEventListener('touchend', function(e) {
+    if (e.touches.length < 2) initialPinchDist = 0;
+    if (e.touches.length === 0) isPanningMap = false;
+  }, { passive: false });
+}
+
+// 🛡️ 全域阻止 Pull-To-Refresh 與雙擊誤放大 (iOS Safari & Android Chrome)
+document.addEventListener('touchmove', function(e) {
+  if (e.touches.length > 1) {
+    if (!e.target.closest('.map-panel') && !e.target.closest('.modal-content')) {
+      e.preventDefault();
+    }
+  }
+}, { passive: false });
+
+let lastTouchTimestamp = 0;
+document.addEventListener('touchend', function(e) {
+  const now = Date.now();
+  if (now - lastTouchTimestamp <= 280) {
+    if (!e.target.closest('input') && !e.target.closest('textarea')) {
+      e.preventDefault();
+    }
+  }
+  lastTouchTimestamp = now;
+}, { passive: false });
+
+
 // ==================== 📱 iOS & Android 行動端分頁與快捷操作 ====================
 let currentMobileTab = 'map';
 
@@ -1696,6 +1801,22 @@ window.filterChronicleLogs = function(type) {
 };
 
 function initGameApp() {
+  // ⚡ 若偵測到正在進行的戰局，且為網頁誤重新整理，直接 0ms 無縫復原！
+  try {
+    const rawAuto = localStorage.getItem(AUTOSAVE_KEY);
+    const sessionActive = sessionStorage.getItem('three_kingdoms_active_session');
+    if (rawAuto && sessionActive === '1') {
+      const parsedSave = JSON.parse(rawAuto);
+      if (parsedSave.year && parsedSave.playerFactionId) {
+        console.log("⚡ 檢測到活躍中戰局，自動無縫復原！");
+        applyLoadedSaveData(parsedSave);
+        return;
+      }
+    }
+  } catch(e) {
+    console.warn("Auto-restore check error:", e);
+  }
+
   gameState.cities = JSON.parse(JSON.stringify(CITIES));
   gameState.generals = JSON.parse(JSON.stringify(GENERALS)).map(g => {
     if (g.loyalty === undefined) g.loyalty = g.faction === 'neutral' ? 50 : 100;
@@ -1708,6 +1829,7 @@ function initGameApp() {
   initMultiplayer();
   initKeyboardShortcuts();
   initWeatherEngine();
+  initMapTouchGestures();
   switchMobileTab('map');
   
   // 開始播放地圖音樂
@@ -2073,6 +2195,7 @@ function getFactionDesc(id) {
 
 // ==================== 開始遊戲與更新UI ====================
 function startGame() {
+  sessionStorage.setItem('three_kingdoms_active_session', '1');
   const scenario = gameState.selectedScenario || SCENARIOS.find(s => s.id === gameState.scenarioId) || SCENARIOS[0];
   gameState.scenarioId = scenario.id;
   gameState.year = scenario.year;
@@ -4226,6 +4349,7 @@ function checkAndShowResumeBanner() {
 }
 
 function applyLoadedSaveData(saveData) {
+  sessionStorage.setItem('three_kingdoms_active_session', '1');
   gameState.year = Number(saveData.year) || 184;
   gameState.month = Number(saveData.month) || 1;
   gameState.playerFactionId = saveData.playerFactionId || 'cao_cao';
