@@ -2,7 +2,11 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#120c08">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>三國志：天下三分</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -384,9 +388,46 @@
       </button>
     </div>
 
+    <!-- 📱 行動端地圖快捷指令抽屜 (iOS / Android 觸控專用) -->
+    <div class="mobile-map-quick-deck" id="mobile-map-quick-deck">
+      <div class="mobile-quick-header">
+        <span id="mobile-quick-city-name">🏯 許昌</span>
+        <span id="mobile-quick-city-troops">⚔️ 25,000兵</span>
+        <button class="mobile-quick-close" onclick="closeMobileQuickDeck()">✖</button>
+      </div>
+      <div class="mobile-quick-btn-row">
+        <button class="mobile-quick-btn btn-attack" onclick="triggerCommand('attack')">⚔️ 出征</button>
+        <button class="mobile-quick-btn" onclick="triggerCommand('conscript')">🛡️ 徵兵</button>
+        <button class="mobile-quick-btn" onclick="triggerCommand('develop_agri')">🌾 開發</button>
+        <button class="mobile-quick-btn" onclick="triggerCommand('develop_comm')">💰 商業</button>
+        <button class="mobile-quick-btn" onclick="triggerCommand('search')">🔍 探索</button>
+        <button class="mobile-quick-btn btn-detail" onclick="switchMobileTab('city')">🏰 詳情</button>
+      </div>
+    </div>
+
     <!-- 隱藏舊版 command-bar 容器以保持代碼兼容 -->
     <footer class="command-panel" id="command-bar" style="display: none !important;"></footer>
   </main>
+
+  <!-- 📱 行動端專屬底部導航欄 (iOS / Android 智慧切換) -->
+  <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
+    <button class="mobile-nav-tab active" id="tab-btn-map" onclick="switchMobileTab('map')">
+      <span class="mobile-nav-icon">🗺️</span>
+      <span class="mobile-nav-label">地圖戰局</span>
+    </button>
+    <button class="mobile-nav-tab" id="tab-btn-city" onclick="switchMobileTab('city')">
+      <span class="mobile-nav-icon">🏰</span>
+      <span class="mobile-nav-label">城池政軍</span>
+    </button>
+    <button class="mobile-nav-tab" id="tab-btn-log" onclick="switchMobileTab('log')">
+      <span class="mobile-nav-icon">📜</span>
+      <span class="mobile-nav-label">大事日誌</span>
+    </button>
+    <button class="mobile-nav-tab" id="tab-btn-lord" onclick="switchMobileTab('lord')">
+      <span class="mobile-nav-icon">👑</span>
+      <span class="mobile-nav-label">君主情報</span>
+    </button>
+  </nav>
 
   <!-- ==================== 彈出視窗與模態框 ==================== -->
 
@@ -1401,6 +1442,6 @@
 
   <!-- 遊戲核心 JS 腳本 -->
   <!-- 注意：我們使用 script type="module" 來使用 ES6 import -->
-  <script type="module" src="game.js?v=202608161636"></script>
+  <script type="module" src="game.js?v=202608161710"></script>
 </body>
 </html>

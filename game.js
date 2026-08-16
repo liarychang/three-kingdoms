@@ -1,3 +1,54 @@
+
+// ==================== 📱 iOS & Android 行動端分頁與快捷操作 ====================
+let currentMobileTab = 'map';
+
+window.switchMobileTab = function(tabName) {
+  currentMobileTab = tabName;
+  const mainContent = document.querySelector('.main-content');
+  if (!mainContent) return;
+
+  mainContent.classList.remove('tab-map', 'tab-city', 'tab-log', 'tab-lord');
+  mainContent.classList.add(`tab-${tabName}`);
+
+  document.querySelectorAll('.mobile-nav-tab').forEach(tab => {
+    if (tab.dataset.tab === tabName || tab.id === `tab-btn-${tabName}`) {
+      tab.classList.add('active');
+    } else {
+      tab.classList.remove('active');
+    }
+  });
+
+  const quickDeck = document.getElementById('mobile-map-quick-deck');
+  if (quickDeck) {
+    if (tabName === 'map' && gameState.selectedCity) {
+      quickDeck.style.display = 'flex';
+    } else {
+      quickDeck.style.display = 'none';
+    }
+  }
+
+  if (tabName === 'map') {
+    renderMap();
+  }
+};
+
+window.closeMobileQuickDeck = function() {
+  const quickDeck = document.getElementById('mobile-map-quick-deck');
+  if (quickDeck) quickDeck.style.display = 'none';
+};
+
+window.showMobileQuickDeck = function(city) {
+  if (window.innerWidth > 850) return;
+  const quickDeck = document.getElementById('mobile-map-quick-deck');
+  const nameEl = document.getElementById('mobile-quick-city-name');
+  const troopsEl = document.getElementById('mobile-quick-city-troops');
+  if (!quickDeck || !nameEl || !troopsEl) return;
+
+  nameEl.textContent = `🏯 ${city.name}`;
+  troopsEl.textContent = `⚔️ ${Number(city.troops || 0).toLocaleString()}兵`;
+  quickDeck.style.display = 'flex';
+};
+
 import { MultiplayerManager } from './multiplayer.js';
 // 三國志地圖策略遊戲 - 核心遊戲引擎 (game.js) - 真人頭像與寫實畫面版
 
@@ -1657,6 +1708,7 @@ function initGameApp() {
   initMultiplayer();
   initKeyboardShortcuts();
   initWeatherEngine();
+  switchMobileTab('map');
   
   // 開始播放地圖音樂
   document.body.addEventListener('click', () => {
@@ -2391,6 +2443,7 @@ function selectCity(city) {
   if (elCity) elCity.classList.add('selected');
   
   updateRightPanel(city);
+  showMobileQuickDeck(city);
   updateMyCitiesQuickNav();
   
   const deck = document.getElementById('city-command-deck');
